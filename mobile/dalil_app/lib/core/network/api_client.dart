@@ -10,16 +10,61 @@ final class ApiClient {
       : dio = Dio(
           BaseOptions(
             baseUrl: Environment.apiV2.toString(),
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 20),
+            connectTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 60),
             headers: const {'Accept': 'application/json'},
           ),
         ) {
-    dio.interceptors.add(_AuthInterceptor(dio, _tokens));
+    dio.interceptors.addAll([
+      _AuthInterceptor(dio, _tokens),
+      _TransientRetryInterceptor(dio),
+    ]);
   }
 
   final TokenStore _tokens;
   final Dio dio;
+}
+
+final class _TransientRetryInterceptor extends Interceptor {
+  _TransientRetryInterceptor(this._dio);
+
+  static const _maxRetries = 2;
+  final Dio _dio;
+
+  @override
+  Future<void> onError(
+    DioException error,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final request = error.requestOptions;
+    final retryCount = request.extra['transientRetryCount'] as int? ?? 0;
+    final statusCode = error.response?.statusCode;
+    final isSafeRequest =
+        request.method.toUpperCase() == 'GET' ||
+        request.method.toUpperCase() == 'HEAD';
+    final isTemporaryFailure = switch (error.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.receiveTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.connectionError => true,
+      _ => statusCode == 502 || statusCode == 503 || statusCode == 504,
+    };
+
+    if (!isSafeRequest ||
+        !isTemporaryFailure ||
+        retryCount >= _maxRetries) {
+      return handler.next(error);
+    }
+
+    request.extra['transientRetryCount'] = retryCount + 1;
+    await Future<void>.delayed(Duration(seconds: retryCount + 2));
+
+    try {
+      handler.resolve(await _dio.fetch<dynamic>(request));
+    } on DioException catch (retryError) {
+      handler.next(retryError);
+    }
+  }
 }
 
 final class _AuthInterceptor extends Interceptor {
