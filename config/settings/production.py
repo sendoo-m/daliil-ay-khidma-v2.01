@@ -47,6 +47,12 @@ CLOUDINARY_UPLOAD_TIMEOUT = config(
     cast=int,
 )
 
+REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
+    *REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'],
+    'apps.api.throttles.BusinessInteractionRateThrottle',
+]
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['business_interaction'] = '30/minute'
+
 # Log unhandled request errors to Render's stdout without enabling DEBUG.
 # Django includes the exception traceback, but does not log request bodies here.
 LOGGING = {
