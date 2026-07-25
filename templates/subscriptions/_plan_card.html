@@ -1,0 +1,27 @@
+{% load i18n %}
+<article class="plan-card {% if plan.is_popular %}plan-card--popular{% endif %}" style="--plan-color: {{ plan.color|default:'#667eea' }};">
+    {% if plan.is_popular %}
+        <div class="plan-popular"><i class="fas fa-star"></i> {% trans "Most popular" %}</div>
+    {% endif %}
+    <div class="plan-icon"><i class="{{ plan.icon|default:'fas fa-tag' }}"></i></div>
+    <h3>{{ plan.display_name }}</h3>
+    <p class="plan-description">{{ plan.description }}</p>
+    <div class="plan-price">
+        <strong>{{ plan.price_monthly|floatformat:0 }}</strong>
+        <span>{% trans "EGP / month" %}</span>
+    </div>
+    <ul class="plan-features">
+        <li><i class="fas fa-check"></i> {% if plan.max_products == 0 %}{% trans "Unlimited products" %}{% else %}{{ plan.max_products }} {% trans "products" %}{% endif %}</li>
+        <li><i class="fas fa-check"></i> {{ plan.max_images_per_product }} {% trans "images per product" %}</li>
+        <li><i class="fas fa-check"></i> {{ plan.max_business_images }} {% trans "business gallery images" %}</li>
+        <li class="{% if not plan.can_show_prices %}is-muted{% endif %}"><i class="fas {% if plan.can_show_prices %}fa-check{% else %}fa-minus{% endif %}"></i> {% trans "Display prices" %}</li>
+        <li class="{% if not plan.can_create_deals %}is-muted{% endif %}"><i class="fas {% if plan.can_create_deals %}fa-check{% else %}fa-minus{% endif %}"></i> {% trans "Create offers" %}</li>
+        <li class="{% if not plan.has_analytics %}is-muted{% endif %}"><i class="fas {% if plan.has_analytics %}fa-check{% else %}fa-minus{% endif %}"></i> {% trans "Analytics dashboard" %}</li>
+        <li class="{% if not plan.featured_in_search %}is-muted{% endif %}"><i class="fas {% if plan.featured_in_search %}fa-check{% else %}fa-minus{% endif %}"></i> {% trans "Priority in search" %}</li>
+        <li class="{% if not plan.has_verified_badge %}is-muted{% endif %}"><i class="fas {% if plan.has_verified_badge %}fa-check{% else %}fa-minus{% endif %}"></i> {% trans "Verified badge" %}</li>
+    </ul>
+    <div class="plan-actions">
+        <a class="btn btn-primary w-100" href="{% url 'subscriptions:subscribe' plan.name %}">{% if plan.price_monthly == 0 %}{% trans "Start free" %}{% else %}{% trans "Choose plan" %}{% endif %}</a>
+        <a class="btn btn-link w-100" href="{% url 'subscriptions:plan_detail' plan.name %}">{% trans "View details" %}</a>
+    </div>
+</article>

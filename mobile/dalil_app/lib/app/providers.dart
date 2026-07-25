@@ -16,6 +16,7 @@ import '../features/notifications/data/notification_repository.dart';
 import '../features/reviews/data/review_repository.dart';
 import '../features/profile/data/profile_repository.dart';
 import '../features/location/data/location_service.dart';
+import '../features/subscriptions/data/subscription_repository.dart';
 
 final tokenStoreProvider = Provider(
   (_) => TokenStore(const FlutterSecureStorage()),
@@ -38,6 +39,9 @@ final profileRepositoryProvider = Provider(
     ref.watch(apiClientProvider).dio,
     ref.watch(tokenStoreProvider),
   ),
+);
+final subscriptionRepositoryProvider = Provider(
+  (ref) => SubscriptionRepository(ref.watch(apiClientProvider).dio),
 );
 final locationServiceProvider = Provider((_) => LocationService());
 final pushServiceProvider = Provider(
