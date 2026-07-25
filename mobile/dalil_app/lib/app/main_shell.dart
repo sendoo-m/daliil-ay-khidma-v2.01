@@ -7,6 +7,7 @@ import '../features/directory/presentation/search_page.dart';
 import '../features/home/presentation/home_page_v4.dart';
 import '../features/location/presentation/map_discovery_page.dart';
 import '../features/profile/presentation/profile_page.dart';
+import '../features/subscriptions/presentation/subscription_plans_page.dart';
 import 'app_theme.dart';
 import 'providers.dart';
 
@@ -21,34 +22,43 @@ class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
   int _favoritesRevision = 0;
 
+  bool _isArabic(BuildContext context) =>
+      Localizations.localeOf(context).languageCode == 'ar';
+
   @override
   Widget build(BuildContext context) {
+    final isArabic = _isArabic(context);
     final isAuthenticated =
         ref.watch(authControllerProvider).valueOrNull ?? false;
     final pages = <Widget>[
       HomePageV4(onSearchTap: () => setState(() => _index = 1)),
       const SearchPage(embedded: true),
       const MapDiscoveryPage(),
+      const SubscriptionPlansPage(),
       isAuthenticated
           ? FavoritesPage(
               key: ValueKey('favorites-$_favoritesRevision'),
               embedded: true,
             )
-          : const _GuestGate(
+          : _GuestGate(
               icon: Icons.favorite_rounded,
-              eyebrow: 'مفضّلتك في مكان واحد',
-              title: 'احفظ الأماكن التي تعجبك',
-              description:
-                  'سجّل دخولك لحفظ المحلات والخدمات والعودة إليها بسرعة في أي وقت.',
+              eyebrow: isArabic ? 'مفضّلتك في مكان واحد' : 'All your favorites',
+              title: isArabic ? 'احفظ الأماكن التي تعجبك' : 'Save places you like',
+              description: isArabic
+                  ? 'سجّل دخولك لحفظ المحلات والخدمات والعودة إليها بسرعة في أي وقت.'
+                  : 'Sign in to save businesses and services and return to them anytime.',
+              isArabic: isArabic,
             ),
       isAuthenticated
           ? const ProfilePage(embedded: true)
-          : const _GuestGate(
+          : _GuestGate(
               icon: Icons.person_rounded,
-              eyebrow: 'تجربة مخصّصة لك',
-              title: 'مرحبًا بك في دليل أي خدمة',
-              description:
-                  'أنشئ حسابًا لإدارة المفضلة والتقييمات والإشعارات بسهولة.',
+              eyebrow: isArabic ? 'تجربة مخصّصة لك' : 'A personalized experience',
+              title: isArabic ? 'مرحبًا بك في دليل أي خدمة' : 'Welcome to Daliil Ay Khidma',
+              description: isArabic
+                  ? 'أنشئ حسابًا لإدارة المفضلة والتقييمات والإشعارات بسهولة.'
+                  : 'Create an account to manage favorites, reviews and notifications.',
+              isArabic: isArabic,
             ),
     ];
 
@@ -69,36 +79,42 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: SafeArea(
           top: false,
           child: NavigationBar(
+            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
             selectedIndex: _index,
             onDestinationSelected: (value) => setState(() {
               _index = value;
-              if (value == 3) _favoritesRevision++;
+              if (value == 4) _favoritesRevision++;
             }),
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: 'الرئيسية',
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home_rounded),
+                label: isArabic ? 'الرئيسية' : 'Home',
               ),
               NavigationDestination(
-                icon: Icon(Icons.search_rounded),
-                selectedIcon: Icon(Icons.manage_search_rounded),
-                label: 'البحث',
+                icon: const Icon(Icons.search_rounded),
+                selectedIcon: const Icon(Icons.manage_search_rounded),
+                label: isArabic ? 'البحث' : 'Search',
               ),
               NavigationDestination(
-                icon: Icon(Icons.map_outlined),
-                selectedIcon: Icon(Icons.map_rounded),
-                label: 'الخريطة',
+                icon: const Icon(Icons.map_outlined),
+                selectedIcon: const Icon(Icons.map_rounded),
+                label: isArabic ? 'الخريطة' : 'Map',
               ),
               NavigationDestination(
-                icon: Icon(Icons.favorite_outline_rounded),
-                selectedIcon: Icon(Icons.favorite_rounded),
-                label: 'المفضلة',
+                icon: const Icon(Icons.workspace_premium_outlined),
+                selectedIcon: const Icon(Icons.workspace_premium_rounded),
+                label: isArabic ? 'الاشتراك' : 'Plans',
               ),
               NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: 'حسابي',
+                icon: const Icon(Icons.favorite_outline_rounded),
+                selectedIcon: const Icon(Icons.favorite_rounded),
+                label: isArabic ? 'المفضلة' : 'Favorites',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: const Icon(Icons.person_rounded),
+                label: isArabic ? 'حسابي' : 'Profile',
               ),
             ],
           ),
@@ -114,12 +130,14 @@ class _GuestGate extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.description,
+    required this.isArabic,
   });
 
   final IconData icon;
   final String eyebrow;
   final String title;
   final String description;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -181,7 +199,11 @@ class _GuestGate extends StatelessWidget {
                     width: double.infinity,
                     child: FilledButton.icon(
                       icon: const Icon(Icons.login_rounded),
-                      label: const Text('تسجيل الدخول أو إنشاء حساب'),
+                      label: Text(
+                        isArabic
+                            ? 'تسجيل الدخول أو إنشاء حساب'
+                            : 'Sign in or create an account',
+                      ),
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => const LoginPage(),
