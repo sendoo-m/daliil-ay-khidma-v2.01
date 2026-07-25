@@ -22,8 +22,9 @@ permissions:
 
 jobs:
   quality:
-    name: Analyze and test
+    name: Fast analyze and test
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     defaults:
       run:
         working-directory: mobile/dalil_app
@@ -46,40 +47,51 @@ jobs:
         run: python3 tool/configure_firebase.py
       - run: flutter pub get
       - run: flutter gen-l10n
-      - name: Normalize generated and source formatting
-        run: dart format lib test
       - run: flutter analyze
       - run: flutter test
-      - name: Build Flutter Web preview
-        run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
-      - name: Add SPA fallback for static hosting
-        run: cp build/web/index.html build/web/404.html
-      - name: Upload Flutter Web build
-        uses: actions/upload-artifact@v4
+
+  android:
+    name: Build Android debug APK
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile/dalil_app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
         with:
-          name: daliil-web
-          path: mobile/dalil_app/build/web
-          if-no-files-found: error
-      - name: Build Android debug APK
-        run: flutter build apk --debug --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android project
+        run: flutter create --empty --platforms=android --org=com.daliilaykhidma --project-name=dalil_app .
+      - name: Configure password-reset deep links
+        run: python3 tool/configure_deep_links.py
+      - name: Configure Firebase client
+        run: python3 tool/configure_firebase.py
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build apk --debug --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
       - name: Upload Android debug APK
         uses: actions/upload-artifact@v4
         with:
           name: daliil-android-debug
           path: mobile/dalil_app/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
-      - name: Upload generated native projects
-        uses: actions/upload-artifact@v4
-        with:
-          name: daliil-native-projects
-          path: |
-            mobile/dalil_app/android
-            mobile/dalil_app/ios
-          if-no-files-found: error
 
   ios:
     name: Build iOS without signing
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: quality
     runs-on: macos-latest
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: mobile/dalil_app
@@ -89,13 +101,12 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Generate native project
+      - name: Generate iOS project
         run: flutter create --empty --platforms=ios --org=com.daliilaykhidma --project-name=dalil_app .
       - name: Configure password-reset deep links
         run: python3 tool/configure_deep_links.py
-      - name: Configure Firebase clients
+      - name: Configure Firebase client
         run: python3 tool/configure_firebase.py
       - run: flutter pub get
       - run: flutter gen-l10n
-      - name: Build iOS
-        run: flutter build ios --debug --no-codesign --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+      - run: flutter build ios --debug --no-codesign --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
