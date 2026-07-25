@@ -17,6 +17,8 @@ if 'test' not in sys.argv:
 
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
+MIDDLEWARE.insert(0, 'apps.api.middleware.BusinessInteractionProtectionMiddleware')
+
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -27,7 +29,7 @@ INTERNAL_IPS = [
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
     'DISABLE_PANELS': [
-        'debug_toolbar.panels.redirects.RedirectsPanel',  # ← شيل الـ # من هنا
+        'debug_toolbar.panels.redirects.RedirectsPanel',
     ],
 }
 

@@ -58,5 +58,11 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run API tests
-        run: python manage.py test apps.api --verbosity=2
+      - name: Run core API contract tests
+        run: python manage.py test apps.api.tests --verbosity=2
+
+      - name: Run authorization boundary tests
+        run: python manage.py test apps.api.test_authorization --verbosity=2
+
+      - name: Run counter protection tests
+        run: python manage.py test apps.api.tests_counter_protection --verbosity=2

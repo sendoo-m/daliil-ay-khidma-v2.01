@@ -77,9 +77,7 @@ class BusinessOwnerObjectAuthorizationTests(TestCase):
 
     def test_owner_list_contains_only_owned_businesses(self):
         self.client.force_authenticate(self.owner)
-
         response = self.client.get("/api/v2/business-owner/businesses/")
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         business_ids = {item["id"] for item in response.data["results"]}
         self.assertEqual(business_ids, {self.business.id})
@@ -87,77 +85,62 @@ class BusinessOwnerObjectAuthorizationTests(TestCase):
 
     def test_owner_cannot_retrieve_another_owners_business(self):
         self.client.force_authenticate(self.owner)
-
         response = self.client.get(
             f"/api/v2/business-owner/businesses/{self.other_business.id}/"
         )
-
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_owner_cannot_update_another_owners_business(self):
         self.client.force_authenticate(self.owner)
         original_name = self.other_business.name_en
-
         response = self.client.patch(
             f"/api/v2/business-owner/businesses/{self.other_business.id}/",
             {"name_en": "Unauthorized change"},
             format="json",
         )
-
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.other_business.refresh_from_db()
         self.assertEqual(self.other_business.name_en, original_name)
 
     def test_owner_cannot_delete_another_owners_business(self):
         self.client.force_authenticate(self.owner)
-
         response = self.client.delete(
             f"/api/v2/business-owner/businesses/{self.other_business.id}/"
         )
-
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Business.objects.filter(pk=self.other_business.pk).exists())
 
     def test_owner_cannot_create_product_under_another_owners_business(self):
         self.client.force_authenticate(self.owner)
-
         response = self.client.post(
             f"/api/v2/business-owner/businesses/{self.other_business.id}/products/",
             {
                 "name_en": "Unauthorized product",
                 "name_ar": "منتج غير مصرح",
+                "description_en": "Must never be created under another owner.",
+                "description_ar": "يجب ألا يُنشأ تحت نشاط مالك آخر.",
                 "product_type": "product",
                 "price": "10.00",
             },
             format="json",
         )
-
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_owner_cannot_list_reviews_for_another_owners_business(self):
         self.client.force_authenticate(self.owner)
-
         response = self.client.get(
             f"/api/v2/business-owner/businesses/{self.other_business.id}/reviews/"
         )
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 0)
         self.assertEqual(response.data["results"], [])
 
     def test_regular_user_cannot_create_a_business_through_owner_api(self):
         self.client.force_authenticate(self.regular_user)
-
         response = self.client.post(
             "/api/v2/business-owner/businesses/",
-            {
-                "name_en": "Unauthorized Business",
-                "name_ar": "نشاط غير مصرح",
-            },
+            {"name_en": "Unauthorized Business", "name_ar": "نشاط غير مصرح"},
             format="json",
         )
-
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertFalse(
-            Business.objects.filter(owner=self.regular_user).exists()
-        )
+        self.assertFalse(Business.objects.filter(owner=self.regular_user).exists())

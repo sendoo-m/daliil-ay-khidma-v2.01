@@ -24,6 +24,7 @@ DATABASES = {
 # Serve collected static files (including Django admin CSS) from Render.
 # WhiteNoise must run directly after Django's SecurityMiddleware.
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+MIDDLEWARE.insert(0, 'apps.api.middleware.BusinessInteractionProtectionMiddleware')
 
 STORAGES = {
     # Keep production bootable until CLOUDINARY_URL is added to Render.
