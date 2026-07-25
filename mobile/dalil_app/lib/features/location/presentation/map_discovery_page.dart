@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../app/providers.dart';
@@ -78,28 +77,15 @@ class _MapDiscoveryPageState extends ConsumerState<MapDiscoveryPage> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: [
-                          _RadiusChip(
-                            label: '5 كم',
-                            selected: _radius == 5,
-                            onTap: () => _changeRadius(5),
-                          ),
-                          _RadiusChip(
-                            label: '10 كم',
-                            selected: _radius == 10,
-                            onTap: () => _changeRadius(10),
-                          ),
-                          _RadiusChip(
-                            label: '20 كم',
-                            selected: _radius == 20,
-                            onTap: () => _changeRadius(20),
-                          ),
-                          _RadiusChip(
-                            label: '50 كم',
-                            selected: _radius == 50,
-                            onTap: () => _changeRadius(50),
-                          ),
-                        ],
+                        children: [5.0, 10.0, 20.0, 50.0]
+                            .map(
+                              (radius) => _RadiusChip(
+                                label: '${radius.toInt()} كم',
+                                selected: _radius == radius,
+                                onTap: () => _changeRadius(radius),
+                              ),
+                            )
+                            .toList(growable: false),
                       ),
                     ),
                   ],
@@ -262,12 +248,12 @@ class _MapDiscoveryPageState extends ConsumerState<MapDiscoveryPage> {
     await controller.clearCircles();
     _businessByCircle.clear();
     for (final business in _visibleItems.where((item) => item.hasCoordinates)) {
-      final isSelected = _selected?.id == business.id;
+      final selected = _selected?.id == business.id;
       final circle = await controller.addCircle(
         CircleOptions(
           geometry: LatLng(business.latitude!, business.longitude!),
-          circleRadius: isSelected ? 12 : 9,
-          circleColor: isSelected ? '#FFB23E' : '#0A8F68',
+          circleRadius: selected ? 12 : 9,
+          circleColor: selected ? '#FFB23E' : '#0A8F68',
           circleStrokeColor: '#FFFFFF',
           circleStrokeWidth: 3,
         ),
@@ -305,15 +291,6 @@ class _MapDiscoveryPageState extends ConsumerState<MapDiscoveryPage> {
           builder: (_) => BusinessDetailPage(slug: business.slug),
         ),
       );
-
-  Future<void> _openDirections(Business business) async {
-    if (!business.hasCoordinates) return;
-    final uri = Uri.https('www.openstreetmap.org', '/directions', {
-      'engine': 'fossgis_osrm_car',
-      'route': '${business.latitude},${business.longitude}',
-    });
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 
   double _zoomForRadius(double radius) => switch (radius) {
         <= 5 => 13,
@@ -441,7 +418,9 @@ class _BusinessMapCard extends StatelessWidget {
                             Text(' ${business.rating.toStringAsFixed(1)}'),
                             if (business.distanceKm != null) ...[
                               const Text('  •  '),
-                              Text('${business.distanceKm!.toStringAsFixed(1)} كم'),
+                              Text(
+                                '${business.distanceKm!.toStringAsFixed(1)} كم',
+                              ),
                             ],
                           ],
                         ),
