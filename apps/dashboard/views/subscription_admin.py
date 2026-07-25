@@ -11,7 +11,9 @@ from apps.subscriptions.models import Subscription, SubscriptionPlan
 @staff_member_required
 def subscription_dashboard(request):
     subscriptions = Subscription.objects.select_related('business', 'plan')
-    plans = SubscriptionPlan.objects.annotate(subscription_count=Count('subscriptions'))
+    # Subscription.plan defines related_query_name='subscription'. Using
+    # 'subscriptions' here raises FieldError and caused the production 500.
+    plans = SubscriptionPlan.objects.annotate(subscription_count=Count('subscription'))
 
     stats = {
         'total_subscriptions': subscriptions.count(),
@@ -48,9 +50,7 @@ def subscription_list(request):
     if plan:
         queryset = queryset.filter(plan__name=plan)
 
-    paginator = Paginator(queryset, 25)
-    page = paginator.get_page(request.GET.get('page'))
-
+    page = Paginator(queryset, 25).get_page(request.GET.get('page'))
     return render(request, 'dashboard/admin/subscriptions/list.html', {
         'subscriptions': page,
         'plans': SubscriptionPlan.objects.filter(is_active=True).order_by('order'),
@@ -67,9 +67,7 @@ def subscription_detail(request, subscription_id):
         Subscription.objects.select_related('business', 'business__owner', 'plan'),
         id=subscription_id,
     )
-    return render(request, 'dashboard/admin/subscriptions/detail.html', {
-        'subscription': subscription,
-    })
+    return render(request, 'dashboard/admin/subscriptions/detail.html', {'subscription': subscription})
 
 
 @staff_member_required
@@ -92,7 +90,7 @@ def subscription_cancel(request, subscription_id):
 
 @staff_member_required
 def subscription_plan_list(request):
-    plans = SubscriptionPlan.objects.annotate(subscription_count=Count('subscriptions')).order_by('order', 'price_monthly')
-    return render(request, 'dashboard/admin/subscriptions/plans.html', {
-        'plans': plans,
-    })
+    plans = SubscriptionPlan.objects.annotate(
+        subscription_count=Count('subscription')
+    ).order_by('order', 'price_monthly')
+    return render(request, 'dashboard/admin/subscriptions/plans.html', {'plans': plans})
