@@ -9,6 +9,26 @@ DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 
+# Allow the deployed Flutter Web client to call the Render API.
+# Additional trusted origins can be supplied as comma-separated environment values.
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CORS_ALLOWED_ORIGINS',
+        default='https://sendoo-m.github.io',
+    ).split(',')
+    if origin.strip()
+]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://sendoo-m.github.io',
+    ).split(',')
+    if origin.strip()
+]
+
 # Database - PostgreSQL for production
 DATABASES = {
     'default': {
