@@ -6,7 +6,8 @@ import '../../../app/app_theme.dart';
 import '../../../app/providers.dart';
 import '../data/subscription_repository.dart';
 
-final subscriptionPlansProvider = FutureProvider.autoDispose<List<SubscriptionPlan>>(
+final subscriptionPlansProvider =
+    FutureProvider.autoDispose<List<SubscriptionPlan>>(
   (ref) => ref.watch(subscriptionRepositoryProvider).plans(),
 );
 
@@ -25,7 +26,11 @@ class SubscriptionPlansPage extends ConsumerWidget {
           error: (_, __) => ListView(
             children: [
               const SizedBox(height: 120),
-              Icon(Icons.cloud_off_rounded, size: 58, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.cloud_off_rounded,
+                size: 58,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               const Center(child: Text('تعذر تحميل خطط الاشتراك')),
               const SizedBox(height: 14),
@@ -46,10 +51,12 @@ class SubscriptionPlansPage extends ConsumerWidget {
               if (items.isEmpty)
                 const _EmptyPlans()
               else
-                ...items.map((plan) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _PlanCard(plan: plan),
-                    )),
+                ...items.map(
+                  (plan) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _PlanCard(plan: plan),
+                  ),
+                ),
             ],
           ),
         ),
@@ -78,7 +85,11 @@ class _PricingHero extends StatelessWidget {
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 38),
+            Icon(
+              Icons.workspace_premium_rounded,
+              color: Colors.white,
+              size: 38,
+            ),
             SizedBox(height: 18),
             Text(
               'اختر الخطة المناسبة لنشاطك',
@@ -91,7 +102,10 @@ class _PricingHero extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               'ابدأ مجانًا وطوّر خطتك عندما تحتاج منتجات وعروض وتحليلات وظهور أقوى.',
-              style: TextStyle(color: Color(0xFFF0EFFF), height: 1.7),
+              style: TextStyle(
+                color: Color(0xFFF0EFFF),
+                height: 1.7,
+              ),
             ),
           ],
         ),
@@ -128,18 +142,27 @@ class _PlanCard extends StatelessWidget {
                     color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(17),
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(plan.displayName, style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        plan.displayName,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       if (plan.isPopular)
                         const Text(
                           'الأكثر اختيارًا',
-                          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                     ],
                   ),
@@ -147,7 +170,10 @@ class _PlanCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Text(plan.description, style: const TextStyle(color: AppColors.muted)),
+            Text(
+              plan.description,
+              style: const TextStyle(color: AppColors.muted),
+            ),
             const SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -163,23 +189,47 @@ class _PlanCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 5),
-                  child: Text('ج.م / شهر', style: TextStyle(color: AppColors.muted)),
+                  child: Text(
+                    'ج.م / شهر',
+                    style: TextStyle(color: AppColors.muted),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 18),
-            _Feature(text: plan.maxProducts == 0 ? 'منتجات غير محدودة' : '${plan.maxProducts} منتج'),
+            _Feature(
+              text: plan.maxProducts == 0
+                  ? 'منتجات غير محدودة'
+                  : '${plan.maxProducts} منتج',
+            ),
             _Feature(text: '${plan.maxImagesPerProduct} صور لكل منتج'),
             _Feature(text: '${plan.maxBusinessImages} صور لمعرض النشاط'),
-            _Feature(text: 'إظهار الأسعار', enabled: plan.canShowPrices),
-            _Feature(text: 'إنشاء العروض', enabled: plan.canCreateDeals),
-            _Feature(text: 'لوحة التحليلات', enabled: plan.hasAnalytics),
-            _Feature(text: 'أولوية في البحث', enabled: plan.featuredInSearch),
-            _Feature(text: 'شارة موثّق', enabled: plan.hasVerifiedBadge),
+            _Feature(
+              text: 'إظهار الأسعار',
+              enabled: plan.canShowPrices,
+            ),
+            _Feature(
+              text: 'إنشاء العروض',
+              enabled: plan.canCreateDeals,
+            ),
+            _Feature(
+              text: 'لوحة التحليلات',
+              enabled: plan.hasAnalytics,
+            ),
+            _Feature(
+              text: 'أولوية في البحث',
+              enabled: plan.featuredInSearch,
+            ),
+            _Feature(
+              text: 'شارة موثّق',
+              enabled: plan.hasVerifiedBadge,
+            ),
             const SizedBox(height: 18),
             FilledButton(
               onPressed: () => _showSubscribeInfo(context, plan),
-              child: Text(plan.priceMonthly == 0 ? 'ابدأ مجانًا' : 'اختر الخطة'),
+              child: Text(
+                plan.priceMonthly == 0 ? 'ابدأ مجانًا' : 'اختر الخطة',
+              ),
             ),
           ],
         ),
@@ -197,11 +247,17 @@ class _PlanCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('الاشتراك في ${plan.displayName}', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'الاشتراك في ${plan.displayName}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 10),
             const Text(
               'إتمام الاشتراك والدفع متاح حاليًا من لوحة نشاطك على الموقع، وسيتم ربط الدفع المباشر داخل التطبيق في المرحلة التالية.',
-              style: TextStyle(color: AppColors.muted, height: 1.7),
+              style: TextStyle(
+                color: AppColors.muted,
+                height: 1.7,
+              ),
             ),
             const SizedBox(height: 18),
             FilledButton(
@@ -226,7 +282,9 @@ class _Feature extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              enabled ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
+              enabled
+                  ? Icons.check_circle_rounded
+                  : Icons.remove_circle_outline_rounded,
               size: 20,
               color: enabled ? AppColors.success : AppColors.muted,
             ),
@@ -234,7 +292,9 @@ class _Feature extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(color: enabled ? AppColors.text : AppColors.muted),
+                style: TextStyle(
+                  color: enabled ? AppColors.text : AppColors.muted,
+                ),
               ),
             ),
           ],
@@ -251,7 +311,11 @@ class _EmptyPlans extends StatelessWidget {
           padding: EdgeInsets.all(36),
           child: Column(
             children: [
-              Icon(Icons.inventory_2_outlined, size: 52, color: AppColors.primary),
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 52,
+                color: AppColors.primary,
+              ),
               SizedBox(height: 14),
               Text('لا توجد خطط نشطة حاليًا'),
             ],
