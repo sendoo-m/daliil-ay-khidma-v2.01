@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/presentation/login_page.dart';
-import '../features/catalog/presentation/deals_page.dart';
 import '../features/directory/presentation/favorites_page.dart';
 import '../features/directory/presentation/search_page.dart';
 import '../features/home/presentation/home_page_v3.dart';
+import '../features/location/presentation/map_discovery_page.dart';
 import '../features/profile/presentation/profile_page.dart';
 import 'app_theme.dart';
 import 'providers.dart';
@@ -28,7 +28,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final pages = <Widget>[
       HomePageV3(onSearchTap: () => setState(() => _index = 1)),
       const SearchPage(embedded: true),
-      const DealsPage(),
+      const MapDiscoveryPage(),
       isAuthenticated
           ? FavoritesPage(
               key: ValueKey('favorites-$_favoritesRevision'),
@@ -86,9 +86,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                 label: 'البحث',
               ),
               NavigationDestination(
-                icon: Icon(Icons.local_offer_outlined),
-                selectedIcon: Icon(Icons.local_offer_rounded),
-                label: 'العروض',
+                icon: Icon(Icons.map_outlined),
+                selectedIcon: Icon(Icons.map_rounded),
+                label: 'الخريطة',
               ),
               NavigationDestination(
                 icon: Icon(Icons.favorite_outline_rounded),
