@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/app_theme.dart';
 import '../../../app/providers.dart';
 import '../data/catalog_models.dart';
 import 'catalog_detail_pages.dart';
@@ -50,98 +51,196 @@ class _DealsPageState extends ConsumerState<DealsPage> {
   Widget build(BuildContext context) {
     final deals = ref.watch(_dealsProvider(_query));
     return Scaffold(
-      appBar: AppBar(title: const Text('العروض والخصومات')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Column(
-              children: [
-                SearchBar(
-                  controller: _searchController,
-                  hintText: 'ابحث في العروض أو أسماء المحلات',
-                  leading: const Icon(Icons.search),
-                  trailing: [
-                    if (_searchController.text.isNotEmpty)
-                      IconButton(
-                        tooltip: 'مسح البحث',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _search = '');
-                        },
-                        icon: const Icon(Icons.close),
-                      ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {});
-                    _onSearch(value);
-                  },
-                ),
-                const SizedBox(height: 10),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: '-created_at',
-                      label: Text('الأحدث'),
-                      icon: Icon(Icons.auto_awesome_outlined),
-                    ),
-                    ButtonSegment(
-                      value: 'end_date',
-                      label: Text('ينتهي قريبًا'),
-                      icon: Icon(Icons.timer_outlined),
-                    ),
-                    ButtonSegment(
-                      value: '-view_count',
-                      label: Text('الأكثر مشاهدة'),
-                      icon: Icon(Icons.trending_up),
-                    ),
-                  ],
-                  selected: {_ordering},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (value) =>
-                      setState(() => _ordering = value.first),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: deals.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => _MessageState(
-                icon: Icons.cloud_off_outlined,
-                message: 'تعذر تحميل العروض',
-                action: () => ref.invalidate(_dealsProvider(_query)),
-              ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return _MessageState(
-                    icon: Icons.local_offer_outlined,
-                    message: _search.isEmpty
-                        ? 'لا توجد عروض متاحة الآن'
-                        : 'لا توجد عروض تطابق بحثك',
-                  );
-                }
-                return RefreshIndicator(
-                  onRefresh: () => ref.refresh(_dealsProvider(_query).future),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, index) => _DealCard(deal: items[index]),
-                  ),
-                );
+      body: SafeArea(
+        child: Column(
+          children: [
+            _DealsHeader(
+              controller: _searchController,
+              onSearch: _onSearch,
+              onClear: () {
+                _searchController.clear();
+                setState(() => _search = '');
               },
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _OrderChip(
+                      label: 'الأحدث',
+                      icon: Icons.auto_awesome_rounded,
+                      selected: _ordering == '-created_at',
+                      onTap: () => setState(() => _ordering = '-created_at'),
+                    ),
+                    const SizedBox(width: 8),
+                    _OrderChip(
+                      label: 'ينتهي قريبًا',
+                      icon: Icons.timer_outlined,
+                      selected: _ordering == 'end_date',
+                      onTap: () => setState(() => _ordering = 'end_date'),
+                    ),
+                    const SizedBox(width: 8),
+                    _OrderChip(
+                      label: 'الأكثر مشاهدة',
+                      icon: Icons.trending_up_rounded,
+                      selected: _ordering == '-view_count',
+                      onTap: () => setState(() => _ordering = '-view_count'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: deals.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => _MessageState(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'تعذر تحميل العروض',
+                  message: 'تحقق من الاتصال ثم حاول مرة أخرى.',
+                  action: () => ref.invalidate(_dealsProvider(_query)),
+                ),
+                data: (items) {
+                  if (items.isEmpty) {
+                    return _MessageState(
+                      icon: Icons.local_offer_outlined,
+                      title: _search.isEmpty
+                          ? 'لا توجد عروض متاحة الآن'
+                          : 'لا توجد نتائج مطابقة',
+                      message: _search.isEmpty
+                          ? 'ستظهر العروض الجديدة هنا فور إضافتها.'
+                          : 'جرّب كلمة بحث مختلفة أو امسح البحث.',
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () => ref.refresh(_dealsProvider(_query).future),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      itemBuilder: (_, index) => _DealCard(
+                        deal: items[index],
+                        featured: index == 0,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+class _DealsHeader extends StatelessWidget {
+  const _DealsHeader({
+    required this.controller,
+    required this.onSearch,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        decoration: BoxDecoration(
+          gradient: AppColors.brandGradient,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: .25),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.local_offer_rounded, color: Colors.white, size: 30),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'العروض والخصومات',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'اكتشف أفضل الصفقات من الأنشطة المسجلة',
+                        style: TextStyle(color: Color(0xFFEDEBFF)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: controller,
+              onChanged: onSearch,
+              decoration: InputDecoration(
+                hintText: 'ابحث في العروض أو أسماء المحلات',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: controller.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'مسح البحث',
+                        onPressed: onClear,
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _OrderChip extends StatelessWidget {
+  const _OrderChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ChoiceChip(
+        selected: selected,
+        onSelected: (_) => onTap(),
+        avatar: Icon(
+          icon,
+          size: 18,
+          color: selected ? AppColors.primary : AppColors.muted,
+        ),
+        label: Text(label),
+      );
+}
+
 class _DealCard extends StatelessWidget {
-  const _DealCard({required this.deal});
+  const _DealCard({required this.deal, required this.featured});
+
   final DealSummary deal;
+  final bool featured;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -157,28 +256,22 @@ class _DealCard extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  _DealImage(url: deal.image),
+                  _DealImage(url: deal.image, featured: featured),
                   PositionedDirectional(
                     top: 12,
                     start: 12,
-                    child: _Badge(
-                      text: deal.typeLabel,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    child: _Badge(text: deal.typeLabel),
                   ),
                   if (deal.daysRemaining <= 3)
                     const PositionedDirectional(
                       top: 12,
                       end: 12,
-                      child: _Badge(
-                        text: 'ينتهي قريبًا',
-                        color: Colors.deepOrange,
-                      ),
+                      child: _Badge(text: 'ينتهي قريبًا', urgent: true),
                     ),
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(17),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -186,37 +279,48 @@ class _DealCard extends StatelessWidget {
                       deal.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                           ),
                     ),
                     if (deal.businessName.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.storefront_outlined, size: 18),
+                          const Icon(
+                            Icons.storefront_outlined,
+                            size: 18,
+                            color: AppColors.muted,
+                          ),
                           const SizedBox(width: 6),
-                          Expanded(child: Text(deal.businessName)),
+                          Expanded(
+                            child: Text(
+                              deal.businessName,
+                              style: const TextStyle(color: AppColors.muted),
+                            ),
+                          ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         if (deal.hasPrice) ...[
                           Text(
                             _money(deal.finalPrice!),
-                            style:
-                                Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           if (deal.hasDiscount) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 9),
                             Text(
                               _money(deal.originalPrice!),
                               style: const TextStyle(
+                                color: AppColors.muted,
                                 decoration: TextDecoration.lineThrough,
                               ),
                             ),
@@ -224,12 +328,33 @@ class _DealCard extends StatelessWidget {
                         ] else
                           Text(
                             deal.typeLabel,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         const Spacer(),
-                        const Icon(Icons.schedule, size: 17),
-                        const SizedBox(width: 4),
-                        Text('متبقي ${deal.daysRemaining} يوم'),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondarySoft,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule_rounded,
+                                size: 16,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text('متبقي ${deal.daysRemaining} يوم'),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -242,38 +367,53 @@ class _DealCard extends StatelessWidget {
 }
 
 class _DealImage extends StatelessWidget {
-  const _DealImage({this.url});
+  const _DealImage({required this.url, required this.featured});
+
   final String? url;
+  final bool featured;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: 180,
+        height: featured ? 210 : 180,
         width: double.infinity,
         child: url == null || url!.isEmpty
-            ? ColoredBox(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: const Icon(Icons.local_offer_outlined, size: 52),
+            ? const DecoratedBox(
+                decoration: BoxDecoration(gradient: AppColors.brandGradient),
+                child: Center(
+                  child: Icon(
+                    Icons.local_offer_rounded,
+                    color: Colors.white,
+                    size: 54,
+                  ),
+                ),
               )
             : Image.network(
                 url!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => ColoredBox(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: const Icon(Icons.local_offer_outlined, size: 52),
+                errorBuilder: (_, __, ___) => const DecoratedBox(
+                  decoration: BoxDecoration(gradient: AppColors.brandGradient),
+                  child: Center(
+                    child: Icon(
+                      Icons.local_offer_rounded,
+                      color: Colors.white,
+                      size: 54,
+                    ),
+                  ),
                 ),
               ),
       );
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.text, required this.color});
+  const _Badge({required this.text, this.urgent = false});
+
   final String text;
-  final Color color;
+  final bool urgent;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
         decoration: BoxDecoration(
-          color: color,
+          color: urgent ? Colors.deepOrange : AppColors.primary,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Padding(
@@ -293,32 +433,47 @@ class _Badge extends StatelessWidget {
 class _MessageState extends StatelessWidget {
   const _MessageState({
     required this.icon,
+    required this.title,
     required this.message,
     this.action,
   });
+
   final IconData icon;
+  final String title;
   final String message;
   final VoidCallback? action;
 
   @override
   Widget build(BuildContext context) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(30),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 52,
-                color: Theme.of(context).colorScheme.primary,
+              Container(
+                width: 86,
+                height: 86,
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 42, color: AppColors.primary),
               ),
-              const SizedBox(height: 16),
-              Text(message, textAlign: TextAlign.center),
+              const SizedBox(height: 18),
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 7),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.muted,
+                    ),
+              ),
               if (action != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 FilledButton.icon(
                   onPressed: action,
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(Icons.refresh_rounded),
                   label: const Text('إعادة المحاولة'),
                 ),
               ],
