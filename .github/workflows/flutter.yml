@@ -53,7 +53,9 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - name: Build Flutter Web preview
-        run: flutter build web --release --base-href=/daliil-ay-khidma/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+        run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+      - name: Add SPA fallback for GitHub Pages
+        run: cp build/web/index.html build/web/404.html
       - name: Upload Flutter Web build
         uses: actions/upload-artifact@v4
         with:
