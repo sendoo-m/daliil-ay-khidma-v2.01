@@ -34,7 +34,31 @@ jobs:
       - run: flutter pub get
       - run: flutter gen-l10n
       - name: Build web for repository path
-        run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+        run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com --dart-define=BUILD_SHA=${{ github.sha }}
+      - name: Remove stale service workers and browser caches
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('build/web/index.html')
+          html = index.read_text(encoding='utf-8')
+          cleanup = '''
+          <script>
+            window.addEventListener('load', async () => {
+              if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map((registration) => registration.unregister()));
+              }
+              if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((key) => caches.delete(key)));
+              }
+            });
+          </script>
+          '''
+          html = html.replace('</head>', f'{cleanup}</head>')
+          index.write_text(html, encoding='utf-8')
+          PY
       - name: Add SPA fallback and disable Jekyll
         run: |
           cp build/web/index.html build/web/404.html
