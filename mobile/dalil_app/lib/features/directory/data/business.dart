@@ -25,6 +25,7 @@ final class Business {
     this.governorateName = '',
     this.totalReviews = 0,
     this.isVerified = false,
+    this.isFeatured = false,
     this.images = const [],
     this.latitude,
     this.longitude,
@@ -39,7 +40,9 @@ final class Business {
         slug: json['slug'] as String? ?? '',
         rating: double.tryParse('${json['average_rating'] ?? 0}') ?? 0,
         logo: _optionalString(json['logo']),
-        description: json['description_ar'] as String? ?? '',
+        description: json['description_ar'] as String? ??
+            json['description_en'] as String? ??
+            '',
         phone: json['phone'] as String? ?? '',
         whatsapp: json['whatsapp'] as String? ?? '',
         email: json['email'] as String? ?? '',
@@ -49,15 +52,20 @@ final class Business {
         twitter: json['twitter'] as String? ?? '',
         tiktok: json['tiktok'] as String? ?? '',
         coverImage: _optionalString(json['cover_image']),
-        address: json['address_ar'] as String? ?? '',
+        address: json['address_ar'] as String? ??
+            json['address_en'] as String? ??
+            '',
         locationUrl: json['location_url'] as String? ?? '',
-        workingHours: json['working_hours_ar'] as String? ?? '',
-        categoryName: _nameAr(json['category']),
-        districtName: _nameAr(json['district']),
-        cityName: _nameAr(json['city']),
-        governorateName: _nameAr(json['governorate']),
+        workingHours: json['working_hours_ar'] as String? ??
+            json['working_hours_en'] as String? ??
+            '',
+        categoryName: _localizedName(json['category']),
+        districtName: _localizedName(json['district']),
+        cityName: _localizedName(json['city']),
+        governorateName: _localizedName(json['governorate']),
         totalReviews: json['total_reviews'] as int? ?? 0,
         isVerified: json['is_verified'] as bool? ?? false,
+        isFeatured: json['is_featured'] as bool? ?? false,
         images: (json['images'] as List<dynamic>? ?? const [])
             .whereType<Map<String, dynamic>>()
             .where((item) => item['is_active'] as bool? ?? true)
@@ -95,6 +103,7 @@ final class Business {
   final String governorateName;
   final int totalReviews;
   final bool isVerified;
+  final bool isFeatured;
   final List<BusinessImage> images;
   final double? latitude;
   final double? longitude;
@@ -104,6 +113,10 @@ final class Business {
   bool get hasCoordinates => latitude != null && longitude != null;
 
   String get displayName => nameAr.isEmpty ? nameEn : nameAr;
+
+  String displayNameFor(String languageCode) => languageCode == 'ar'
+      ? (nameAr.isNotEmpty ? nameAr : nameEn)
+      : (nameEn.isNotEmpty ? nameEn : nameAr);
 
   String get area {
     final parts = [districtName, cityName, governorateName]
@@ -130,7 +143,9 @@ final class BusinessImage {
 
   factory BusinessImage.fromJson(Map<String, dynamic> json) => BusinessImage(
         url: json['image'] as String? ?? '',
-        caption: json['caption_ar'] as String? ?? '',
+        caption: json['caption_ar'] as String? ??
+            json['caption_en'] as String? ??
+            '',
       );
 
   final String url;
@@ -142,9 +157,9 @@ double? _coordinate(Object? value) {
   return double.tryParse('$value');
 }
 
-String _nameAr(Object? value) {
+String _localizedName(Object? value) {
   if (value is! Map<String, dynamic>) return '';
-  return value['name_ar'] as String? ?? '';
+  return value['name_ar'] as String? ?? value['name_en'] as String? ?? '';
 }
 
 String? _optionalString(Object? value) {
