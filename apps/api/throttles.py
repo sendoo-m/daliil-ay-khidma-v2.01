@@ -1,4 +1,4 @@
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -11,3 +11,9 @@ class RegistrationRateThrottle(AnonRateThrottle):
 
 class PasswordResetRateThrottle(AnonRateThrottle):
     scope = 'password_reset'
+
+
+class BusinessInteractionRateThrottle(ScopedRateThrottle):
+    """Apply a dedicated limit to public business counter events."""
+
+    scope = 'business_interaction'
