@@ -45,6 +45,9 @@ final class SubscriptionPlan {
   final bool isPopular;
   final String color;
 
+  String get displayName => displayNameFor('ar');
+  String get description => descriptionFor('ar');
+
   String displayNameFor(String languageCode) => languageCode == 'ar'
       ? (displayNameAr.isNotEmpty ? displayNameAr : displayNameEn)
       : (displayNameEn.isNotEmpty ? displayNameEn : displayNameAr);
