@@ -5,9 +5,11 @@ abstract final class AppColors {
   static const primaryDark = Color(0xFF066047);
   static const primarySoft = Color(0xFFE1F4ED);
   static const accent = Color(0xFFFFB23E);
+  static const accentDark = Color(0xFFD77B00);
   static const accentSoft = Color(0xFFFFF3DC);
   static const background = Color(0xFFF4F7F6);
   static const surface = Color(0xFFFFFFFF);
+  static const surfaceMuted = Color(0xFFF0F5F3);
   static const text = Color(0xFF13211C);
   static const muted = Color(0xFF697870);
   static const border = Color(0xFFDCE6E2);
