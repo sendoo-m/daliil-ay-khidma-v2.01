@@ -20,6 +20,7 @@ final class CatalogRepository {
     double? minPrice,
     double? maxPrice,
     String ordering = 'price',
+    int pageSize = 50,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       'products/',
@@ -32,7 +33,7 @@ final class CatalogRepository {
         if (minPrice != null) 'min_price': minPrice,
         if (maxPrice != null) 'max_price': maxPrice,
         'ordering': ordering,
-        'page_size': 50,
+        'page_size': pageSize,
       },
     );
     final results = response.data?['results'] as List<dynamic>? ?? const [];
@@ -45,13 +46,16 @@ final class CatalogRepository {
   Future<List<DealSummary>> deals({
     String search = '',
     String ordering = '-created_at',
+    int? businessId,
+    int pageSize = 50,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       'deals/',
       queryParameters: {
         if (search.trim().isNotEmpty) 'search': search.trim(),
+        if (businessId != null) 'business': businessId,
         'ordering': ordering,
-        'page_size': 50,
+        'page_size': pageSize,
       },
     );
     final results = response.data?['results'] as List<dynamic>? ?? const [];
