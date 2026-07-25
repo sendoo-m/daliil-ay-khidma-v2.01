@@ -79,8 +79,15 @@ final class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final access = await _tokens.readAccess();
-    if (access != null) options.headers['Authorization'] = 'Bearer $access';
+    try {
+      final access = await _tokens.readAccess();
+      if (access != null && access.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $access';
+      }
+    } catch (_) {
+      // Authentication storage must never block public requests on Web.
+      options.headers.remove('Authorization');
+    }
     handler.next(options);
   }
 
