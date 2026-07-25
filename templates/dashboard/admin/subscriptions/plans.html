@@ -1,0 +1,21 @@
+{% extends 'dashboard/admin/base.html' %}
+{% block title %}خطط الاشتراك{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div><h1 class="h3 fw-bold mb-1">خطط الاشتراك</h1><p class="text-muted mb-0">عرض الخطط الحالية وعدد المشتركين في كل خطة.</p></div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{% url 'dashboard:admin_subscriptions_home' %}">لوحة الاشتراكات</a><a class="btn btn-primary" href="{% url 'admin:subscriptions_subscriptionplan_add' %}" target="_blank"><i class="fas fa-plus"></i> إضافة خطة</a></div>
+</div>
+<div class="row g-4">
+    {% for plan in plans %}
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="table-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3"><div class="rounded-3 d-flex align-items-center justify-content-center" style="width:52px;height:52px;background:{{ plan.color }}22;color:{{ plan.color }};"><i class="{{ plan.icon }} fa-lg"></i></div><span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">{% if plan.is_active %}نشطة{% else %}متوقفة{% endif %}</span></div>
+            <h4 class="fw-bold">{{ plan.display_name }}</h4><p class="text-muted">{{ plan.description|truncatewords:18 }}</p>
+            <div class="fs-3 fw-bold text-primary mb-2">{{ plan.price_monthly|floatformat:0 }} <small class="fs-6 text-muted">ج.م / شهر</small></div>
+            <div class="border-top pt-3 mb-3"><strong>{{ plan.subscription_count }}</strong> اشتراك مرتبط</div>
+            <a class="btn btn-outline-primary w-100" href="{% url 'admin:subscriptions_subscriptionplan_change' plan.id %}" target="_blank"><i class="fas fa-pen"></i> تعديل الخطة</a>
+        </div>
+    </div>
+    {% empty %}<div class="col-12"><div class="alert alert-info">لا توجد خطط اشتراك.</div></div>{% endfor %}
+</div>
+{% endblock %}
