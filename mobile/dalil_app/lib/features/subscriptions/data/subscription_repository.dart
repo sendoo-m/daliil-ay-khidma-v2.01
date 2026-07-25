@@ -4,8 +4,10 @@ final class SubscriptionPlan {
   const SubscriptionPlan({
     required this.id,
     required this.name,
-    required this.displayName,
-    required this.description,
+    required this.displayNameAr,
+    required this.displayNameEn,
+    required this.descriptionAr,
+    required this.descriptionEn,
     required this.priceMonthly,
     required this.priceQuarterly,
     required this.priceSemiAnnual,
@@ -24,8 +26,10 @@ final class SubscriptionPlan {
 
   final int id;
   final String name;
-  final String displayName;
-  final String description;
+  final String displayNameAr;
+  final String displayNameEn;
+  final String descriptionAr;
+  final String descriptionEn;
   final double priceMonthly;
   final double priceQuarterly;
   final double priceSemiAnnual;
@@ -41,13 +45,30 @@ final class SubscriptionPlan {
   final bool isPopular;
   final String color;
 
+  String displayNameFor(String languageCode) => languageCode == 'ar'
+      ? (displayNameAr.isNotEmpty ? displayNameAr : displayNameEn)
+      : (displayNameEn.isNotEmpty ? displayNameEn : displayNameAr);
+
+  String descriptionFor(String languageCode) => languageCode == 'ar'
+      ? (descriptionAr.isNotEmpty ? descriptionAr : descriptionEn)
+      : (descriptionEn.isNotEmpty ? descriptionEn : descriptionAr);
+
+  double priceFor(String period) => switch (period) {
+        'quarterly' => priceQuarterly,
+        'semi_annual' => priceSemiAnnual,
+        'annual' => priceAnnual,
+        _ => priceMonthly,
+      };
+
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
     double money(String key) => double.tryParse('${json[key] ?? 0}') ?? 0;
     return SubscriptionPlan(
       id: json['id'] as int? ?? 0,
       name: '${json['name'] ?? ''}',
-      displayName: '${json['display_name_ar'] ?? json['display_name_en'] ?? ''}',
-      description: '${json['description_ar'] ?? json['description_en'] ?? ''}',
+      displayNameAr: '${json['display_name_ar'] ?? ''}',
+      displayNameEn: '${json['display_name_en'] ?? ''}',
+      descriptionAr: '${json['description_ar'] ?? ''}',
+      descriptionEn: '${json['description_en'] ?? ''}',
       priceMonthly: money('price_monthly'),
       priceQuarterly: money('price_quarterly'),
       priceSemiAnnual: money('price_semi_annual'),
