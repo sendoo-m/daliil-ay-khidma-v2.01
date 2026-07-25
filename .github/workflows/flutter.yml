@@ -19,8 +19,6 @@ concurrency:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   quality:
@@ -54,7 +52,7 @@ jobs:
       - run: flutter test
       - name: Build Flutter Web preview
         run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
-      - name: Add SPA fallback for GitHub Pages
+      - name: Add SPA fallback for static hosting
         run: cp build/web/index.html build/web/404.html
       - name: Upload Flutter Web build
         uses: actions/upload-artifact@v4
@@ -62,16 +60,6 @@ jobs:
           name: daliil-web
           path: mobile/dalil_app/build/web
           if-no-files-found: error
-      - name: Configure GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Upload GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: mobile/dalil_app/build/web
       - name: Build Android debug APK
         run: flutter build apk --debug --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
       - name: Upload Android debug APK
@@ -111,16 +99,3 @@ jobs:
       - run: flutter gen-l10n
       - name: Build iOS
         run: flutter build ios --debug --no-codesign --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
-
-  deploy-web:
-    name: Deploy Flutter Web preview
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: quality
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

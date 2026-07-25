@@ -1,0 +1,63 @@
+name: Pages
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'mobile/dalil_app/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build Flutter Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/dalil_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate web project
+        run: flutter create --empty --platforms=web --org=com.daliilaykhidma --project-name=dalil_app .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Build web for repository path
+        run: flutter build web --release --base-href=/daliil-ay-khidma-v2.01/ --no-web-resources-cdn --pwa-strategy=none --dart-define=API_BASE_URL=https://daliil-ay-khidma.onrender.com
+      - name: Add SPA fallback and disable Jekyll
+        run: |
+          cp build/web/index.html build/web/404.html
+          touch build/web/.nojekyll
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: mobile/dalil_app/build/web
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
