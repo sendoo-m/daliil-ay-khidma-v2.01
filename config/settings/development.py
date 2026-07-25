@@ -17,6 +17,8 @@ if 'test' not in sys.argv:
 
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
+MIDDLEWARE.insert(0, 'apps.api.middleware.BusinessInteractionProtectionMiddleware')
+
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -39,13 +41,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
-    *REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'],
-    'apps.api.throttles.BusinessInteractionRateThrottle',
-]
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['business_interaction'] = '30/minute'
 
 
 # Email Backend
