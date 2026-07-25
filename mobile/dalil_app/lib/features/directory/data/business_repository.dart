@@ -38,6 +38,14 @@ final class BusinessRepository {
     return Business.fromJson(response.data!);
   }
 
+  Future<void> incrementView(String slug) async {
+    await _dio.post<void>('businesses/$slug/increment_view/');
+  }
+
+  Future<void> incrementClick(String slug) async {
+    await _dio.post<void>('businesses/$slug/increment_click/');
+  }
+
   Future<bool> toggleFavorite(int businessId) async {
     final response = await _dio.post<Map<String, dynamic>>(
       'favorites/toggle/',
