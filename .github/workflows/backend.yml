@@ -59,4 +59,11 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Run API tests
-        run: python manage.py test apps.api --verbosity=2
+        shell: bash
+        run: |
+          set -o pipefail
+          python manage.py test apps.api --verbosity=2 2>&1 | tee /tmp/backend-tests.log
+
+      - name: Show failure summary
+        if: failure()
+        run: tail -n 200 /tmp/backend-tests.log || true
