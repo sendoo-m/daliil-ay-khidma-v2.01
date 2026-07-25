@@ -104,7 +104,10 @@ class _HeroHeader extends StatelessWidget {
                     color: Colors.white.withValues(alpha: .15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.explore_rounded, color: Colors.white),
+                  child: const Icon(
+                    Icons.explore_rounded,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -157,7 +160,10 @@ class _HeroHeader extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'محلات، خدمات، منتجات وعروض في مكان واحد',
-              style: TextStyle(color: Color(0xFFE1F5EE), fontSize: 15),
+              style: TextStyle(
+                color: Color(0xFFE1F5EE),
+                fontSize: 15,
+              ),
             ),
             const SizedBox(height: 18),
             Material(
@@ -167,10 +173,16 @@ class _HeroHeader extends StatelessWidget {
                 onTap: onSearchTap,
                 borderRadius: BorderRadius.circular(19),
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.search_rounded, color: AppColors.primary),
+                      Icon(
+                        Icons.search_rounded,
+                        color: AppColors.primary,
+                      ),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -178,7 +190,10 @@ class _HeroHeader extends StatelessWidget {
                           style: TextStyle(color: AppColors.muted),
                         ),
                       ),
-                      Icon(Icons.tune_rounded, color: AppColors.primary),
+                      Icon(
+                        Icons.tune_rounded,
+                        color: AppColors.primary,
+                      ),
                     ],
                   ),
                 ),
@@ -205,7 +220,9 @@ class _QuickActions extends StatelessWidget {
                 title: 'بالقرب مني',
                 subtitle: 'اكتشف الأقرب',
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const NearbyPage()),
+                  MaterialPageRoute<void>(
+                    builder: (_) => const NearbyPage(),
+                  ),
                 ),
               ),
             ),
@@ -259,9 +276,17 @@ class _ActionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       const SizedBox(height: 3),
-                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
@@ -338,7 +363,10 @@ class _Categories extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -448,7 +476,9 @@ class _ProductCard extends StatelessWidget {
                         item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 7),
                       Text(
@@ -506,15 +536,23 @@ class _DealRail extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.local_offer_rounded, color: AppColors.accentDark),
+                            const Icon(
+                              Icons.local_offer_rounded,
+                              color: AppColors.accentDark,
+                            ),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text('متبقي ${item.daysRemaining} يوم'),
+                              child: Text(
+                                'متبقي ${item.daysRemaining} يوم',
+                              ),
                             ),
                           ],
                         ),
@@ -523,7 +561,10 @@ class _DealRail extends StatelessWidget {
                           item.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                         const Spacer(),
                         Text(
@@ -569,9 +610,15 @@ class _Section extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 3),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
@@ -594,7 +641,11 @@ class _ErrorState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_rounded, size: 54, color: AppColors.muted),
+              const Icon(
+                Icons.cloud_off_rounded,
+                size: 54,
+                color: AppColors.muted,
+              ),
               const SizedBox(height: 14),
               const Text('تعذر تحميل الصفحة الرئيسية'),
               const SizedBox(height: 14),
