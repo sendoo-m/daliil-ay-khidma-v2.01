@@ -4,14 +4,11 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'mobile/dalil_app/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -22,6 +19,7 @@ jobs:
   build:
     name: Build Flutter Web
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: mobile/dalil_app
@@ -54,6 +52,7 @@ jobs:
     name: Deploy GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
