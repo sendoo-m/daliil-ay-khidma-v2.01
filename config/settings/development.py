@@ -27,7 +27,7 @@ INTERNAL_IPS = [
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
     'DISABLE_PANELS': [
-        'debug_toolbar.panels.redirectsPanel',
+        'debug_toolbar.panels.redirects.RedirectsPanel',
     ],
 }
 
