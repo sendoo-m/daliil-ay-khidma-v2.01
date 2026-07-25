@@ -27,7 +27,7 @@ INTERNAL_IPS = [
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
     'DISABLE_PANELS': [
-        'debug_toolbar.panels.redirects.RedirectsPanel',  # ← شيل الـ # من هنا
+        'debug_toolbar.panels.redirectsPanel',
     ],
 }
 
@@ -39,6 +39,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
+    *REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'],
+    'apps.api.throttles.BusinessInteractionRateThrottle',
+]
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['business_interaction'] = '30/minute'
 
 
 # Email Backend
