@@ -24,6 +24,7 @@ DATABASES = {
 # Serve collected static files (including Django admin CSS) from Render.
 # WhiteNoise must run directly after Django's SecurityMiddleware.
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+MIDDLEWARE.insert(0, 'apps.api.middleware.BusinessInteractionProtectionMiddleware')
 
 STORAGES = {
     # Keep production bootable until CLOUDINARY_URL is added to Render.
@@ -46,12 +47,6 @@ CLOUDINARY_UPLOAD_TIMEOUT = config(
     default=8,
     cast=int,
 )
-
-REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
-    *REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'],
-    'apps.api.throttles.BusinessInteractionRateThrottle',
-]
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['business_interaction'] = '30/minute'
 
 # Log unhandled request errors to Render's stdout without enabling DEBUG.
 # Django includes the exception traceback, but does not log request bodies here.
