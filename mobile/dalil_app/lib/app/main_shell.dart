@@ -5,7 +5,7 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/catalog/presentation/deals_page.dart';
 import '../features/directory/presentation/favorites_page.dart';
 import '../features/directory/presentation/search_page.dart';
-import '../features/home/presentation/home_page.dart';
+import '../features/home/presentation/home_page_v3.dart';
 import '../features/profile/presentation/profile_page.dart';
 import 'app_theme.dart';
 import 'providers.dart';
@@ -26,7 +26,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final isAuthenticated =
         ref.watch(authControllerProvider).valueOrNull ?? false;
     final pages = <Widget>[
-      HomePage(onSearchTap: () => setState(() => _index = 1)),
+      HomePageV3(onSearchTap: () => setState(() => _index = 1)),
       const SearchPage(embedded: true),
       const DealsPage(),
       isAuthenticated
