@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Compare subscription plans" %}{% endblock %}
+{% block extra_css %}
+<style>
+.comparison-page{background:#f8fafc;min-height:100vh;padding:48px 0 72px}.comparison-head{text-align:center;max-width:760px;margin:0 auto 34px}.comparison-head h1{font-weight:900;color:#172033}.comparison-head p{color:#6b7280}.comparison-wrap{overflow:auto;background:#fff;border-radius:24px;box-shadow:0 18px 50px rgba(17,24,39,.08)}.comparison-table{min-width:920px;margin:0}.comparison-table th,.comparison-table td{padding:16px 18px;vertical-align:middle}.comparison-table thead th{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-align:center}.comparison-table thead th:first-child{text-align:start}.comparison-table tbody tr:nth-child(even){background:#fafbff}.comparison-table tbody th{font-weight:800;color:#344054}.yes{color:#22a06b}.no{color:#c0c7d1}.price-cell strong{font-size:1.25rem;color:#667eea}.compare-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:28px}.compare-actions .btn{border-radius:999px;font-weight:800;padding:11px 20px}
+</style>
+{% endblock %}
+{% block content %}
+<section class="comparison-page"><div class="container">
+<div class="comparison-head"><span class="badge rounded-pill text-bg-primary mb-3">{% trans "Clear comparison" %}</span><h1>{% trans "Compare every plan side by side" %}</h1><p>{% trans "All values come directly from the subscription plans configured in the administration panel." %}</p></div>
+{% if plans %}
+<div class="comparison-wrap"><table class="table comparison-table mb-0"><thead><tr><th>{% trans "Feature" %}</th>{% for plan in plans %}<th>{{ plan.display_name }}{% if plan.is_popular %}<div><small><i class="fas fa-star"></i> {% trans "Popular" %}</small></div>{% endif %}</th>{% endfor %}</tr></thead><tbody>
+<tr><th>{% trans "Monthly price" %}</th>{% for plan in plans %}<td class="text-center price-cell"><strong>{{ plan.price_monthly|floatformat:0 }}</strong> {% trans "EGP" %}</td>{% endfor %}</tr>
+<tr><th>{% trans "Quarterly price" %}</th>{% for plan in plans %}<td class="text-center">{{ plan.price_quarterly|floatformat:0 }} {% trans "EGP" %}</td>{% endfor %}</tr>
+<tr><th>{% trans "Annual price" %}</th>{% for plan in plans %}<td class="text-center">{{ plan.price_annual|floatformat:0 }} {% trans "EGP" %}</td>{% endfor %}</tr>
+<tr><th>{% trans "Products" %}</th>{% for plan in plans %}<td class="text-center">{% if plan.max_products == 0 %}{% trans "Unlimited" %}{% else %}{{ plan.max_products }}{% endif %}</td>{% endfor %}</tr>
+<tr><th>{% trans "Images per product" %}</th>{% for plan in plans %}<td class="text-center">{{ plan.max_images_per_product }}</td>{% endfor %}</tr>
+<tr><th>{% trans "Business gallery images" %}</th>{% for plan in plans %}<td class="text-center">{{ plan.max_business_images }}</td>{% endfor %}</tr>
+<tr><th>{% trans "Display prices" %}</th>{% for plan in plans %}<td class="text-center"><i class="fas {% if plan.can_show_prices %}fa-circle-check yes{% else %}fa-circle-minus no{% endif %}"></i></td>{% endfor %}</tr>
+<tr><th>{% trans "Create offers" %}</th>{% for plan in plans %}<td class="text-center"><i class="fas {% if plan.can_create_deals %}fa-circle-check yes{% else %}fa-circle-minus no{% endif %}"></i></td>{% endfor %}</tr>
+<tr><th>{% trans "Analytics" %}</th>{% for plan in plans %}<td class="text-center"><i class="fas {% if plan.has_analytics %}fa-circle-check yes{% else %}fa-circle-minus no{% endif %}"></i></td>{% endfor %}</tr>
+<tr><th>{% trans "Priority in search" %}</th>{% for plan in plans %}<td class="text-center"><i class="fas {% if plan.featured_in_search %}fa-circle-check yes{% else %}fa-circle-minus no{% endif %}"></i></td>{% endfor %}</tr>
+<tr><th>{% trans "Verified badge" %}</th>{% for plan in plans %}<td class="text-center"><i class="fas {% if plan.has_verified_badge %}fa-circle-check yes{% else %}fa-circle-minus no{% endif %}"></i></td>{% endfor %}</tr>
+<tr><th></th>{% for plan in plans %}<td class="text-center"><a class="btn btn-primary btn-sm" href="{% url 'subscriptions:subscribe' plan.name %}">{% trans "Choose" %}</a></td>{% endfor %}</tr>
+</tbody></table></div>
+{% else %}<div class="alert alert-info">{% trans "No active plans are available yet." %}</div>{% endif %}
+<div class="compare-actions"><a class="btn btn-outline-primary" href="{% url 'subscriptions:plans_list' %}"><i class="fas fa-arrow-right"></i> {% trans "Back to plans" %}</a>{% if user.is_authenticated %}<a class="btn btn-primary" href="{% url 'subscriptions:my_subscription' %}">{% trans "My subscription" %}</a>{% endif %}</div>
+</div></section>
+{% endblock %}
