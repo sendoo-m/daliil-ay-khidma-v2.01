@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/directory/presentation/favorites_page.dart';
 import '../features/directory/presentation/search_page.dart';
-import '../features/home/presentation/home_page_v3.dart';
+import '../features/home/presentation/home_page_v4.dart';
 import '../features/location/presentation/map_discovery_page.dart';
 import '../features/profile/presentation/profile_page.dart';
 import 'app_theme.dart';
@@ -26,7 +26,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final isAuthenticated =
         ref.watch(authControllerProvider).valueOrNull ?? false;
     final pages = <Widget>[
-      HomePageV3(onSearchTap: () => setState(() => _index = 1)),
+      HomePageV4(onSearchTap: () => setState(() => _index = 1)),
       const SearchPage(embedded: true),
       const MapDiscoveryPage(),
       isAuthenticated
@@ -60,7 +60,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           border: const Border(top: BorderSide(color: AppColors.border)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: .05),
+              color: Colors.black.withValues(alpha: .07),
               blurRadius: 18,
               offset: const Offset(0, -4),
             ),
@@ -131,11 +131,11 @@ class _GuestGate extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppColors.border),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: .05),
+                    color: Colors.black.withValues(alpha: .08),
                     blurRadius: 28,
                     offset: const Offset(0, 12),
                   ),
@@ -148,10 +148,10 @@ class _GuestGate extends StatelessWidget {
                     width: 92,
                     height: 92,
                     decoration: const BoxDecoration(
-                      color: AppColors.primarySoft,
+                      gradient: AppColors.brandGradient,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, size: 42, color: AppColors.primary),
+                    child: Icon(icon, size: 42, color: Colors.white),
                   ),
                   const SizedBox(height: 24),
                   Text(
