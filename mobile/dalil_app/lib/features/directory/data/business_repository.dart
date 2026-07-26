@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/paginated_result.dart';
 import 'business.dart';
 
 final class BusinessRepository {
@@ -14,6 +15,29 @@ final class BusinessRepository {
     double? minRating,
     String ordering = '-is_featured',
   }) async {
+    final page = await searchPage(
+      query,
+      categoryId: categoryId,
+      governorateId: governorateId,
+      businessType: businessType,
+      minRating: minRating,
+      ordering: ordering,
+      pageSize: 50,
+    );
+    return page.items;
+  }
+
+  Future<PaginatedResult<Business>> searchPage(
+    String query, {
+    int? categoryId,
+    int? governorateId,
+    String? businessType,
+    double? minRating,
+    String ordering = '-is_featured',
+    int page = 1,
+    int pageSize = 20,
+    CancelToken? cancelToken,
+  }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       'businesses/',
       queryParameters: {
@@ -23,14 +47,16 @@ final class BusinessRepository {
         if (businessType != null) 'business_type': businessType,
         if (minRating != null) 'min_rating': minRating,
         'ordering': ordering,
-        'page_size': 50,
+        'page': page,
+        'page_size': pageSize,
       },
+      cancelToken: cancelToken,
     );
-    final results = response.data?['results'] as List<dynamic>? ?? const [];
-    return results
-        .cast<Map<String, dynamic>>()
-        .map(Business.fromJson)
-        .toList(growable: false);
+    return PaginatedResult<Business>.fromJson(
+      response.data ?? const <String, dynamic>{},
+      page: page,
+      parser: Business.fromJson,
+    );
   }
 
   Future<Business> detail(String slug) async {
