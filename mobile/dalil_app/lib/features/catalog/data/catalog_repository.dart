@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/paginated_result.dart';
 import 'catalog_models.dart';
 import 'deal_claim.dart';
 
@@ -27,6 +28,33 @@ final class CatalogRepository {
     String ordering = 'price',
     int pageSize = 50,
   }) async {
+    final page = await searchProductsPage(
+      query,
+      categoryId: categoryId,
+      businessId: businessId,
+      governorateId: governorateId,
+      productType: productType,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      ordering: ordering,
+      pageSize: pageSize,
+    );
+    return page.items;
+  }
+
+  Future<PaginatedResult<ProductSummary>> searchProductsPage(
+    String query, {
+    int? categoryId,
+    int? businessId,
+    int? governorateId,
+    String? productType,
+    double? minPrice,
+    double? maxPrice,
+    String ordering = 'price',
+    int page = 1,
+    int pageSize = 20,
+    CancelToken? cancelToken,
+  }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       'products/',
       queryParameters: {
@@ -38,14 +66,16 @@ final class CatalogRepository {
         if (minPrice != null) 'min_price': minPrice,
         if (maxPrice != null) 'max_price': maxPrice,
         'ordering': ordering,
+        'page': page,
         'page_size': pageSize,
       },
+      cancelToken: cancelToken,
     );
-    final results = response.data?['results'] as List<dynamic>? ?? const [];
-    return results
-        .cast<Map<String, dynamic>>()
-        .map(ProductSummary.fromJson)
-        .toList(growable: false);
+    return PaginatedResult<ProductSummary>.fromJson(
+      response.data ?? const <String, dynamic>{},
+      page: page,
+      parser: ProductSummary.fromJson,
+    );
   }
 
   Future<List<DealSummary>> deals({
