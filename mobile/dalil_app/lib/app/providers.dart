@@ -10,6 +10,7 @@ import '../features/auth/data/password_reset_repository.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/catalog/data/catalog_repository.dart';
 import '../features/directory/data/business_repository.dart';
+import '../features/directory/data/discovery_repository.dart';
 import '../features/directory/data/search_history_repository.dart';
 import '../features/directory/presentation/search_history_controller.dart';
 import '../features/home/data/home_repository.dart';
@@ -71,6 +72,12 @@ final businessRepositoryProvider = Provider(
 );
 final catalogRepositoryProvider = Provider(
   (ref) => CatalogRepository(ref.watch(apiClientProvider).dio),
+);
+final discoveryRepositoryProvider = Provider(
+  (ref) => DiscoveryRepository(ref.watch(apiClientProvider).dio),
+);
+final discoveryProvider = FutureProvider(
+  (ref) => ref.watch(discoveryRepositoryProvider).fetch(),
 );
 final searchHistoryRepositoryProvider = Provider(
   (_) => SearchHistoryRepository(const FlutterSecureStorage()),
