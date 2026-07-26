@@ -3,9 +3,15 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import get_language
 from django.views.decorators.http import require_POST
 
+from apps.subscriptions.forms import SubscriptionPlanForm
 from apps.subscriptions.models import Subscription, SubscriptionPlan
+
+
+def _message(ar, en):
+    return ar if (get_language() or '').startswith('ar') else en
 
 
 @staff_member_required
@@ -75,7 +81,7 @@ def subscription_detail(request, subscription_id):
 def subscription_activate(request, subscription_id):
     subscription = get_object_or_404(Subscription, id=subscription_id)
     subscription.activate()
-    messages.success(request, 'تم تفعيل الاشتراك بنجاح.')
+    messages.success(request, _message('تم تفعيل الاشتراك بنجاح.', 'Subscription activated successfully.'))
     return redirect('dashboard:admin_subscription_detail', subscription_id=subscription.id)
 
 
@@ -84,7 +90,7 @@ def subscription_activate(request, subscription_id):
 def subscription_cancel(request, subscription_id):
     subscription = get_object_or_404(Subscription, id=subscription_id)
     subscription.cancel()
-    messages.success(request, 'تم إلغاء الاشتراك بنجاح.')
+    messages.success(request, _message('تم إلغاء الاشتراك بنجاح.', 'Subscription cancelled successfully.'))
     return redirect('dashboard:admin_subscription_detail', subscription_id=subscription.id)
 
 
@@ -94,3 +100,29 @@ def subscription_plan_list(request):
         subscription_count=Count('subscription')
     ).order_by('order', 'price_monthly')
     return render(request, 'dashboard/admin/subscriptions/plans.html', {'plans': plans})
+
+
+@staff_member_required
+def subscription_plan_edit(request, plan_id):
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+
+    if request.method == 'POST':
+        form = SubscriptionPlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                _message('تم تحديث خطة الاشتراك بنجاح.', 'Subscription plan updated successfully.'),
+            )
+            return redirect('dashboard:admin_subscription_plans')
+        messages.error(
+            request,
+            _message('يرجى تصحيح الأخطاء الموضحة أدناه.', 'Please correct the errors shown below.'),
+        )
+    else:
+        form = SubscriptionPlanForm(instance=plan)
+
+    return render(request, 'dashboard/admin/subscriptions/plan_edit.html', {
+        'form': form,
+        'plan': plan,
+    })
