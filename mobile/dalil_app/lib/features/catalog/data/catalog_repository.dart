@@ -74,6 +74,10 @@ final class CatalogRepository {
     return DealDetail.fromJson(response.data!);
   }
 
+  Future<void> incrementDealView(String slug) async {
+    await _dio.post<void>('deals/$slug/increment_view/');
+  }
+
   Future<DealClaimResult> claimDeal(String slug) async {
     final response = await _dio.post<Map<String, dynamic>>('deals/$slug/claim/');
     return DealClaimResult.fromJson(response.data!);
