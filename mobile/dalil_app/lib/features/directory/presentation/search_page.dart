@@ -7,10 +7,13 @@ import '../../../app/app_theme.dart';
 import '../../../app/providers.dart';
 import '../../catalog/data/catalog_models.dart';
 import '../../catalog/presentation/catalog_detail_pages.dart';
+import '../../home/data/home_repository.dart';
 import '../data/business.dart';
 import 'business_card.dart';
 
 enum _SearchKind { businesses, products }
+
+enum _SearchSort { featured, rating, newest, priceLow, priceHigh, alphabetical }
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({
@@ -33,7 +36,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       TextEditingController(text: widget.initialQuery);
   late String _query = widget.initialQuery.trim();
   late int? _categoryId = widget.initialCategoryId;
+  int? _governorateId;
+  String? _businessType;
+  String? _productType;
+  double? _minRating;
+  double? _minPrice;
+  double? _maxPrice;
   var _kind = _SearchKind.businesses;
+  var _sort = _SearchSort.featured;
   var _revision = 0;
   Timer? _debounce;
 
@@ -43,6 +53,34 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   List<String> get _popularSearches => _isArabic
       ? const ['مطاعم', 'كافيهات', 'سباك', 'كهربائي', 'صيدليات', 'عروض']
       : const ['Restaurants', 'Cafes', 'Plumber', 'Electrician', 'Pharmacies', 'Deals'];
+
+  int get _filterCount => <Object?>[
+        _categoryId,
+        _governorateId,
+        _kind == _SearchKind.businesses ? _businessType : _productType,
+        _kind == _SearchKind.businesses ? _minRating : null,
+        _kind == _SearchKind.products ? _minPrice : null,
+        _kind == _SearchKind.products ? _maxPrice : null,
+      ].where((value) => value != null).length;
+
+  bool get _hasFilters => _filterCount > 0;
+
+  String get _ordering {
+    switch (_sort) {
+      case _SearchSort.featured:
+        return '-is_featured';
+      case _SearchSort.rating:
+        return '-average_rating';
+      case _SearchSort.newest:
+        return '-created_at';
+      case _SearchSort.priceLow:
+        return 'price';
+      case _SearchSort.priceHigh:
+        return '-price';
+      case _SearchSort.alphabetical:
+        return _isArabic ? 'name_ar' : 'name_en';
+    }
+  }
 
   @override
   void initState() {
@@ -65,8 +103,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      _submit(value, dismissKeyboard: false);
+      if (mounted) _submit(value, dismissKeyboard: false);
     });
   }
 
@@ -97,11 +134,23 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     });
   }
 
+  void _clearFilters() => setState(() {
+        _categoryId = widget.initialCategoryId;
+        _governorateId = null;
+        _businessType = null;
+        _productType = null;
+        _minRating = null;
+        _minPrice = null;
+        _maxPrice = null;
+        _sort = _SearchSort.featured;
+        _revision++;
+      });
+
   @override
   Widget build(BuildContext context) {
     final home = ref.watch(homeProvider);
     final history = ref.watch(searchHistoryProvider);
-    final discoveryMode = _query.isEmpty && _categoryId == null;
+    final discoveryMode = _query.isEmpty && !_hasFilters;
 
     return Scaffold(
       backgroundColor: AppColors.surfaceMuted,
@@ -110,6 +159,19 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           : AppBar(
               title: Text(_tr('البحث والاستكشاف', 'Search & discovery')),
               centerTitle: false,
+              actions: [
+                IconButton(
+                  tooltip: _tr('الفلاتر والترتيب', 'Filters & sorting'),
+                  onPressed: home.valueOrNull == null
+                      ? null
+                      : () => _showFilters(home.requireValue),
+                  icon: Badge(
+                    isLabelVisible: _filterCount > 0,
+                    label: Text('$_filterCount'),
+                    child: const Icon(Icons.tune_rounded),
+                  ),
+                ),
+              ],
             ),
       body: SafeArea(
         top: widget.embedded,
@@ -121,6 +183,10 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               onChanged: _onChanged,
               onSubmitted: (value) => _submit(value),
               onClear: _clearSearch,
+              onFilter: home.valueOrNull == null
+                  ? null
+                  : () => _showFilters(home.requireValue),
+              filterCount: _filterCount,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -141,6 +207,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 selected: {_kind},
                 onSelectionChanged: (value) => setState(() {
                   _kind = value.first;
+                  _sort = _SearchSort.featured;
                   _revision++;
                 }),
               ),
@@ -157,6 +224,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               ),
               orElse: () => const SizedBox(height: 16),
             ),
+            if (!discoveryMode)
+              _ActiveFilters(
+                isArabic: _isArabic,
+                sort: _sort,
+                filterCount: _filterCount,
+                onSort: () => home.valueOrNull == null
+                    ? null
+                    : _showFilters(home.requireValue),
+                onClear: _hasFilters ? _clearFilters : null,
+              ),
             Expanded(
               child: discoveryMode
                   ? _DiscoveryContent(
@@ -183,11 +260,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   Widget _businessResults() => FutureBuilder<List<Business>>(
-        key: ValueKey('business-$_revision-$_query-$_categoryId'),
+        key: ValueKey('business-$_revision-$_query-$_categoryId-$_ordering'),
         future: ref.read(businessRepositoryProvider).search(
               _query,
               categoryId: _categoryId,
-              ordering: '-is_featured',
+              governorateId: _governorateId,
+              businessType: _businessType,
+              minRating: _minRating,
+              ordering: _ordering,
             ),
         builder: (context, snapshot) => _ResultsFrame<Business>(
           snapshot: snapshot,
@@ -197,21 +277,214 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       );
 
   Widget _productResults() => FutureBuilder<List<ProductSummary>>(
-        key: ValueKey('product-$_revision-$_query-$_categoryId'),
+        key: ValueKey('product-$_revision-$_query-$_categoryId-$_ordering'),
         future: ref.read(catalogRepositoryProvider).searchProducts(
               _query,
               categoryId: _categoryId,
-              ordering: '-is_featured',
+              governorateId: _governorateId,
+              productType: _productType,
+              minPrice: _minPrice,
+              maxPrice: _maxPrice,
+              ordering: _ordering,
             ),
         builder: (context, snapshot) => _ResultsFrame<ProductSummary>(
           snapshot: snapshot,
           isArabic: _isArabic,
-          itemBuilder: (item) => _ProductResultCard(
-            item: item,
-            isArabic: _isArabic,
-          ),
+          itemBuilder: (item) => _ProductResultCard(item: item, isArabic: _isArabic),
         ),
       );
+
+  Future<void> _showFilters(HomeData home) async {
+    var governorateId = _governorateId;
+    var businessType = _businessType;
+    var productType = _productType;
+    var minRating = _minRating;
+    var sort = _sort;
+    final minPriceController =
+        TextEditingController(text: _minPrice?.toStringAsFixed(0) ?? '');
+    final maxPriceController =
+        TextEditingController(text: _maxPrice?.toStringAsFixed(0) ?? '');
+
+    final apply = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              0,
+              20,
+              20 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  _tr('الفلاتر والترتيب', 'Filters & sorting'),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 18),
+                DropdownButtonFormField<int?>(
+                  initialValue: governorateId,
+                  decoration: InputDecoration(
+                    labelText: _tr('المحافظة', 'Governorate'),
+                    prefixIcon: const Icon(Icons.location_on_outlined),
+                  ),
+                  items: [
+                    DropdownMenuItem(value: null, child: Text(_tr('كل المحافظات', 'All governorates'))),
+                    ...home.governorates.map((item) => DropdownMenuItem(
+                          value: item['id'] as int?,
+                          child: Text('${item[_isArabic ? 'name_ar' : 'name_en'] ?? item['name_ar'] ?? ''}'),
+                        )),
+                  ],
+                  onChanged: (value) => setModalState(() => governorateId = value),
+                ),
+                const SizedBox(height: 14),
+                if (_kind == _SearchKind.businesses) ...[
+                  DropdownButtonFormField<String?>(
+                    initialValue: businessType,
+                    decoration: InputDecoration(
+                      labelText: _tr('نوع النشاط', 'Business type'),
+                      prefixIcon: const Icon(Icons.store_mall_directory_outlined),
+                    ),
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(_tr('الكل', 'All'))),
+                      DropdownMenuItem(value: 'shop', child: Text(_tr('محلات', 'Shops'))),
+                      DropdownMenuItem(value: 'craft', child: Text(_tr('حرفيون', 'Crafts'))),
+                      DropdownMenuItem(value: 'public', child: Text(_tr('خدمات عامة', 'Public services'))),
+                    ],
+                    onChanged: (value) => setModalState(() => businessType = value),
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<double?>(
+                    initialValue: minRating,
+                    decoration: InputDecoration(
+                      labelText: _tr('أقل تقييم', 'Minimum rating'),
+                      prefixIcon: const Icon(Icons.star_outline_rounded),
+                    ),
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(_tr('أي تقييم', 'Any rating'))),
+                      DropdownMenuItem(value: 3, child: Text(_tr('3 نجوم فأكثر', '3+ stars'))),
+                      DropdownMenuItem(value: 4, child: Text(_tr('4 نجوم فأكثر', '4+ stars'))),
+                      DropdownMenuItem(value: 4.5, child: Text(_tr('4.5 نجمة فأكثر', '4.5+ stars'))),
+                    ],
+                    onChanged: (value) => setModalState(() => minRating = value),
+                  ),
+                ] else ...[
+                  DropdownButtonFormField<String?>(
+                    initialValue: productType,
+                    decoration: InputDecoration(
+                      labelText: _tr('النوع', 'Type'),
+                      prefixIcon: const Icon(Icons.inventory_2_outlined),
+                    ),
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(_tr('الكل', 'All'))),
+                      DropdownMenuItem(value: 'product', child: Text(_tr('منتجات', 'Products'))),
+                      DropdownMenuItem(value: 'service', child: Text(_tr('خدمات', 'Services'))),
+                    ],
+                    onChanged: (value) => setModalState(() => productType = value),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(child: TextField(
+                        controller: minPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: _tr('أقل سعر', 'Min price')),
+                      )),
+                      const SizedBox(width: 12),
+                      Expanded(child: TextField(
+                        controller: maxPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: _tr('أعلى سعر', 'Max price')),
+                      )),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 14),
+                DropdownButtonFormField<_SearchSort>(
+                  initialValue: sort,
+                  decoration: InputDecoration(
+                    labelText: _tr('الترتيب', 'Sort by'),
+                    prefixIcon: const Icon(Icons.sort_rounded),
+                  ),
+                  items: _availableSorts
+                      .map((value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(_sortLabel(value)),
+                          ))
+                      .toList(growable: false),
+                  onChanged: (value) {
+                    if (value != null) setModalState(() => sort = value);
+                  },
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(_tr('إلغاء', 'Cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.pop(context, true),
+                        icon: const Icon(Icons.check_rounded),
+                        label: Text(_tr('تطبيق', 'Apply')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (apply == true && mounted) {
+      setState(() {
+        _governorateId = governorateId;
+        _businessType = businessType;
+        _productType = productType;
+        _minRating = minRating;
+        _minPrice = double.tryParse(minPriceController.text.trim());
+        _maxPrice = double.tryParse(maxPriceController.text.trim());
+        _sort = sort;
+        _revision++;
+      });
+    }
+    minPriceController.dispose();
+    maxPriceController.dispose();
+  }
+
+  List<_SearchSort> get _availableSorts => _kind == _SearchKind.businesses
+      ? const [_SearchSort.featured, _SearchSort.rating, _SearchSort.newest, _SearchSort.alphabetical]
+      : const [_SearchSort.featured, _SearchSort.newest, _SearchSort.priceLow, _SearchSort.priceHigh, _SearchSort.alphabetical];
+
+  String _sortLabel(_SearchSort value) {
+    switch (value) {
+      case _SearchSort.featured:
+        return _tr('المميز أولًا', 'Featured first');
+      case _SearchSort.rating:
+        return _tr('الأعلى تقييمًا', 'Highest rated');
+      case _SearchSort.newest:
+        return _tr('الأحدث', 'Newest');
+      case _SearchSort.priceLow:
+        return _tr('السعر: من الأقل', 'Price: low to high');
+      case _SearchSort.priceHigh:
+        return _tr('السعر: من الأعلى', 'Price: high to low');
+      case _SearchSort.alphabetical:
+        return _tr('أبجديًا', 'Alphabetical');
+    }
+  }
 }
 
 class _SearchHero extends StatelessWidget {
@@ -221,6 +494,8 @@ class _SearchHero extends StatelessWidget {
     required this.onChanged,
     required this.onSubmitted,
     required this.onClear,
+    required this.onFilter,
+    required this.filterCount,
   });
 
   final TextEditingController controller;
@@ -228,6 +503,8 @@ class _SearchHero extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onClear;
+  final VoidCallback? onFilter;
+  final int filterCount;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -254,34 +531,44 @@ class _SearchHero extends StatelessWidget {
               style: TextStyle(color: Colors.white.withValues(alpha: .84)),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              textInputAction: TextInputAction.search,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
-              decoration: InputDecoration(
-                hintText: isArabic
-                    ? 'اسم نشاط، منتج أو خدمة...'
-                    : 'Business, product or service...',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: controller.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: isArabic ? 'مسح' : 'Clear',
-                        onPressed: onClear,
-                        icon: const Icon(Icons.close_rounded),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    textInputAction: TextInputAction.search,
+                    onChanged: onChanged,
+                    onSubmitted: onSubmitted,
+                    decoration: InputDecoration(
+                      hintText: isArabic ? 'اسم نشاط، منتج أو خدمة...' : 'Business, product or service...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: controller.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: isArabic ? 'مسح' : 'Clear',
+                              onPressed: onClear,
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
                       ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
+                const SizedBox(width: 10),
+                Badge(
+                  isLabelVisible: filterCount > 0,
+                  label: Text('$filterCount'),
+                  child: IconButton.filledTonal(
+                    tooltip: isArabic ? 'الفلاتر' : 'Filters',
+                    onPressed: onFilter,
+                    icon: const Icon(Icons.tune_rounded),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -289,13 +576,7 @@ class _SearchHero extends StatelessWidget {
 }
 
 class _CategoryStrip extends StatelessWidget {
-  const _CategoryStrip({
-    required this.categories,
-    required this.selectedId,
-    required this.isArabic,
-    required this.onSelected,
-  });
-
+  const _CategoryStrip({required this.categories, required this.selectedId, required this.isArabic, required this.onSelected});
   final List<Map<String, dynamic>> categories;
   final int? selectedId;
   final bool isArabic;
@@ -331,17 +612,43 @@ class _CategoryStrip extends StatelessWidget {
       );
 }
 
-class _DiscoveryContent extends StatelessWidget {
-  const _DiscoveryContent({
-    required this.isArabic,
-    required this.history,
-    required this.popular,
-    required this.typedValue,
-    required this.onSelect,
-    required this.onRemove,
-    required this.onClearHistory,
-  });
+class _ActiveFilters extends StatelessWidget {
+  const _ActiveFilters({required this.isArabic, required this.sort, required this.filterCount, required this.onSort, required this.onClear});
+  final bool isArabic;
+  final _SearchSort sort;
+  final int filterCount;
+  final VoidCallback? onSort;
+  final VoidCallback? onClear;
 
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 50,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          children: [
+            ActionChip(
+              avatar: const Icon(Icons.sort_rounded, size: 18),
+              label: Text(isArabic ? 'الترتيب والفلاتر' : 'Sort & filters'),
+              onPressed: onSort,
+            ),
+            if (filterCount > 0) ...[
+              const SizedBox(width: 8),
+              Chip(label: Text(isArabic ? '$filterCount فلاتر نشطة' : '$filterCount active filters')),
+              const SizedBox(width: 8),
+              ActionChip(
+                avatar: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                label: Text(isArabic ? 'مسح الكل' : 'Clear all'),
+                onPressed: onClear,
+              ),
+            ],
+          ],
+        ),
+      );
+}
+
+class _DiscoveryContent extends StatelessWidget {
+  const _DiscoveryContent({required this.isArabic, required this.history, required this.popular, required this.typedValue, required this.onSelect, required this.onRemove, required this.onClearHistory});
   final bool isArabic;
   final AsyncValue<List<String>> history;
   final List<String> popular;
@@ -358,112 +665,48 @@ class _DiscoveryContent extends StatelessWidget {
         .where((item) => needle.isEmpty || item.toLowerCase().contains(needle))
         .take(6)
         .toList(growable: false);
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         if (needle.isNotEmpty && suggestions.isNotEmpty) ...[
-          _SectionTitle(
-            title: isArabic ? 'اقتراحات البحث' : 'Search suggestions',
-            icon: Icons.auto_awesome_rounded,
-          ),
+          _SectionTitle(title: isArabic ? 'اقتراحات البحث' : 'Search suggestions', icon: Icons.auto_awesome_rounded),
           const SizedBox(height: 10),
-          ...suggestions.map(
-            (item) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: const Icon(Icons.north_west_rounded),
-                title: Text(item),
-                trailing: const Icon(Icons.arrow_forward_rounded, size: 18),
-                onTap: () => onSelect(item),
-              ),
-            ),
-          ),
+          ...suggestions.map((item) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.north_west_rounded),
+                  title: Text(item),
+                  trailing: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  onTap: () => onSelect(item),
+                ),
+              )),
           const SizedBox(height: 18),
         ],
         if (recent.isNotEmpty) ...[
-          _SectionTitle(
-            title: isArabic ? 'عمليات البحث الأخيرة' : 'Recent searches',
-            icon: Icons.history_rounded,
-            actionLabel: isArabic ? 'مسح الكل' : 'Clear all',
-            onAction: onClearHistory,
-          ),
+          _SectionTitle(title: isArabic ? 'عمليات البحث الأخيرة' : 'Recent searches', icon: Icons.history_rounded, actionLabel: isArabic ? 'مسح الكل' : 'Clear all', onAction: onClearHistory),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: recent
-                .map(
-                  (item) => InputChip(
-                    avatar: const Icon(Icons.history_rounded, size: 17),
-                    label: Text(item),
-                    onPressed: () => onSelect(item),
-                    onDeleted: () => onRemove(item),
-                  ),
-                )
-                .toList(growable: false),
+            children: recent.map((item) => InputChip(
+                  avatar: const Icon(Icons.history_rounded, size: 17),
+                  label: Text(item),
+                  onPressed: () => onSelect(item),
+                  onDeleted: () => onRemove(item),
+                )).toList(growable: false),
           ),
           const SizedBox(height: 24),
         ],
-        _SectionTitle(
-          title: isArabic ? 'الأكثر بحثًا' : 'Popular searches',
-          icon: Icons.trending_up_rounded,
-        ),
+        _SectionTitle(title: isArabic ? 'الأكثر بحثًا' : 'Popular searches', icon: Icons.trending_up_rounded),
         const SizedBox(height: 10),
         Wrap(
           spacing: 9,
           runSpacing: 9,
-          children: popular
-              .map(
-                (item) => ActionChip(
-                  avatar: const Icon(Icons.search_rounded, size: 17),
-                  label: Text(item),
-                  onPressed: () => onSelect(item),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 28),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: const BoxDecoration(
-                  color: AppColors.primarySoft,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.tips_and_updates_rounded,
-                    color: AppColors.primary),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'ابحث بطريقة أسرع' : 'Search faster',
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isArabic
-                          ? 'اكتب اسم المكان أو الخدمة، ثم اختر القسم لتضييق النتائج.'
-                          : 'Type a place or service, then choose a category to narrow results.',
-                      style: const TextStyle(color: AppColors.muted, height: 1.45),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          children: popular.map((item) => ActionChip(
+                avatar: const Icon(Icons.search_rounded, size: 17),
+                label: Text(item),
+                onPressed: () => onSelect(item),
+              )).toList(growable: false),
         ),
       ],
     );
@@ -471,13 +714,7 @@ class _DiscoveryContent extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.icon,
-    this.actionLabel,
-    this.onAction,
-  });
-
+  const _SectionTitle({required this.title, required this.icon, this.actionLabel, this.onAction});
   final String title;
   final IconData icon;
   final String? actionLabel;
@@ -488,44 +725,26 @@ class _SectionTitle extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.primary),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ),
-          if (actionLabel != null)
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))),
+          if (actionLabel != null) TextButton(onPressed: onAction, child: Text(actionLabel!)),
         ],
       );
 }
 
 class _ResultsFrame<T> extends StatelessWidget {
-  const _ResultsFrame({
-    required this.snapshot,
-    required this.itemBuilder,
-    required this.isArabic,
-  });
-
+  const _ResultsFrame({required this.snapshot, required this.itemBuilder, required this.isArabic});
   final AsyncSnapshot<List<T>> snapshot;
   final Widget Function(T item) itemBuilder;
   final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
-    if (snapshot.connectionState != ConnectionState.done) {
-      return const _SearchSkeleton();
-    }
+    if (snapshot.connectionState != ConnectionState.done) return const _SearchSkeleton();
     if (snapshot.hasError) {
       return _MessageState(
         icon: Icons.cloud_off_outlined,
         title: isArabic ? 'تعذر تنفيذ البحث' : 'Search failed',
-        subtitle: isArabic
-            ? 'تحقق من الاتصال وحاول مرة أخرى'
-            : 'Check your connection and try again',
+        subtitle: isArabic ? 'تحقق من الاتصال وحاول مرة أخرى' : 'Check your connection and try again',
       );
     }
     final items = snapshot.data ?? const [];
@@ -533,27 +752,21 @@ class _ResultsFrame<T> extends StatelessWidget {
       return _MessageState(
         icon: Icons.search_off_rounded,
         title: isArabic ? 'لا توجد نتائج' : 'No results found',
-        subtitle: isArabic
-            ? 'جرّب كلمة مختلفة أو اختر قسمًا آخر'
-            : 'Try another term or choose a different category',
+        subtitle: isArabic ? 'جرّب كلمة مختلفة أو وسّع نطاق الفلاتر' : 'Try another term or broaden the filters',
       );
     }
-    return RefreshIndicator(
-      onRefresh: () async {},
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, index) => itemBuilder(items[index]),
-      ),
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, index) => itemBuilder(items[index]),
     );
   }
 }
 
 class _SearchSkeleton extends StatelessWidget {
   const _SearchSkeleton();
-
   @override
   Widget build(BuildContext context) => ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
@@ -561,11 +774,7 @@ class _SearchSkeleton extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, __) => Container(
           height: 112,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
-          ),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.border)),
           child: const Center(child: LinearProgressIndicator()),
         ),
       );
@@ -573,7 +782,6 @@ class _SearchSkeleton extends StatelessWidget {
 
 class _ProductResultCard extends StatelessWidget {
   const _ProductResultCard({required this.item, required this.isArabic});
-
   final ProductSummary item;
   final bool isArabic;
 
@@ -581,11 +789,7 @@ class _ProductResultCard extends StatelessWidget {
   Widget build(BuildContext context) => Card(
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => ProductDetailPage(slug: item.slug),
-            ),
-          ),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProductDetailPage(slug: item.slug))),
           child: Padding(
             padding: const EdgeInsets.all(13),
             child: Row(
@@ -593,49 +797,18 @@ class _ProductResultCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: item.image == null
-                      ? Container(
-                          width: 82,
-                          height: 82,
-                          color: AppColors.surfaceMuted,
-                          child: const Icon(Icons.inventory_2_outlined,
-                              color: AppColors.primary),
-                        )
-                      : Image.network(
-                          item.image!,
-                          width: 82,
-                          height: 82,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox.square(
-                            dimension: 82,
-                            child: Icon(Icons.broken_image_outlined),
-                          ),
-                        ),
+                      ? Container(width: 82, height: 82, color: AppColors.surfaceMuted, child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary))
+                      : Image.network(item.image!, width: 82, height: 82, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.square(dimension: 82, child: Icon(Icons.broken_image_outlined))),
                 ),
                 const SizedBox(width: 13),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                      Text(item.businessName,
-                          style: const TextStyle(color: AppColors.muted)),
+                      Text(item.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                      Text(item.businessName, style: const TextStyle(color: AppColors.muted)),
                       const SizedBox(height: 7),
-                      Text(
-                        isArabic ? '${item.price} ج.م' : '${item.price} EGP',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                      Text(isArabic ? '${item.price} ج.م' : '${item.price} EGP', style: const TextStyle(color: AppColors.primary, fontSize: 17, fontWeight: FontWeight.w900)),
                     ],
                   ),
                 ),
@@ -648,12 +821,7 @@ class _ProductResultCard extends StatelessWidget {
 }
 
 class _MessageState extends StatelessWidget {
-  const _MessageState({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
+  const _MessageState({required this.icon, required this.title, required this.subtitle});
   final IconData icon;
   final String title;
   final String subtitle;
@@ -665,38 +833,15 @@ class _MessageState extends StatelessWidget {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 430),
             padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.border),
-            ),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: AppColors.border)),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 82,
-                  height: 82,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primarySoft,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 42, color: AppColors.primary),
-                ),
+                Container(width: 82, height: 82, decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle), child: Icon(icon, size: 42, color: AppColors.primary)),
                 const SizedBox(height: 17),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
-                ),
+                Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 7),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.muted, height: 1.6),
-                ),
+                Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, height: 1.6)),
               ],
             ),
           ),
