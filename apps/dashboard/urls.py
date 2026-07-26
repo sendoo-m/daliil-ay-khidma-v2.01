@@ -69,6 +69,7 @@ urlpatterns = [
     path('admin/subscriptions/', subscription_admin.subscription_dashboard, name='admin_subscriptions_home'),
     path('admin/subscriptions/list/', subscription_admin.subscription_list, name='admin_subscriptions_list'),
     path('admin/subscriptions/plans/', subscription_admin.subscription_plan_list, name='admin_subscription_plans'),
+    path('admin/subscriptions/plans/<int:plan_id>/edit/', subscription_admin.subscription_plan_edit, name='admin_subscription_plan_edit'),
     path('admin/subscriptions/<int:subscription_id>/', subscription_admin.subscription_detail, name='admin_subscription_detail'),
     path('admin/subscriptions/<int:subscription_id>/activate/', subscription_admin.subscription_activate, name='admin_subscription_activate'),
     path('admin/subscriptions/<int:subscription_id>/cancel/', subscription_admin.subscription_cancel, name='admin_subscription_cancel'),
