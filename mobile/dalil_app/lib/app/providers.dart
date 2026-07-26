@@ -4,18 +4,20 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/auth/token_store.dart';
 import '../core/network/api_client.dart';
 import '../core/notifications/push_service.dart';
+import '../features/app_config/data/app_config_repository.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/data/password_reset_repository.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/catalog/data/catalog_repository.dart';
 import '../features/directory/data/business_repository.dart';
+import '../features/directory/data/search_history_repository.dart';
+import '../features/directory/presentation/search_history_controller.dart';
 import '../features/home/data/home_repository.dart';
-import '../features/app_config/data/app_config_repository.dart';
+import '../features/location/data/location_service.dart';
 import '../features/notifications/data/device_repository.dart';
 import '../features/notifications/data/notification_repository.dart';
-import '../features/reviews/data/review_repository.dart';
 import '../features/profile/data/profile_repository.dart';
-import '../features/location/data/location_service.dart';
+import '../features/reviews/data/review_repository.dart';
 import '../features/subscriptions/data/subscription_repository.dart';
 
 final tokenStoreProvider = Provider(
@@ -69,6 +71,13 @@ final businessRepositoryProvider = Provider(
 );
 final catalogRepositoryProvider = Provider(
   (ref) => CatalogRepository(ref.watch(apiClientProvider).dio),
+);
+final searchHistoryRepositoryProvider = Provider(
+  (_) => SearchHistoryRepository(const FlutterSecureStorage()),
+);
+final searchHistoryProvider = StateNotifierProvider<SearchHistoryController,
+    AsyncValue<List<String>>>(
+  (ref) => SearchHistoryController(ref.watch(searchHistoryRepositoryProvider)),
 );
 final appConfigProvider = FutureProvider(
   (ref) => ref.watch(appConfigRepositoryProvider).fetch(),
