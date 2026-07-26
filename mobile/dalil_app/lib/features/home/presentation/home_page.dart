@@ -347,7 +347,7 @@ class _CategoriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _Section(
-        title: isArabic ? 'استكشف الأقسام' : 'Explore categories',
+        title: isArabic ? 'تصفح حسب القسم' : 'Browse by category',
         subtitle: isArabic ? 'اختر القسم المناسب لك' : 'Choose what you need',
         child: categories.isEmpty
             ? _SectionEmpty(
@@ -365,17 +365,19 @@ class _CategoriesSection extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final item = categories[index];
-                    final name = '${item[isArabic ? 'name_ar' : 'name_en'] ?? item['name_ar'] ?? ''}';
+                    final name =
+                        '${item[isArabic ? 'name_ar' : 'name_en'] ?? item['name_ar'] ?? ''}';
                     final iconUrl = '${item['icon'] ?? ''}';
                     final categoryId = item['id'] as int?;
                     return SizedBox(
                       width: 84,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(20),
+                        // ✅ إرسال initialCategoryId فقط بدون initialQuery
+                        // حتى لا يختلط فلتر القسم مع البحث النصي
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => SearchPage(
-                              initialQuery: name,
                               initialCategoryId: categoryId,
                             ),
                           ),
@@ -389,7 +391,8 @@ class _CategoriesSection extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(21),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: .1),
+                                  color:
+                                      AppColors.primary.withValues(alpha: .1),
                                 ),
                               ),
                               child: !iconUrl.startsWith('http')
@@ -399,7 +402,8 @@ class _CategoriesSection extends StatelessWidget {
                                       padding: const EdgeInsets.all(14),
                                       child: Image.network(
                                         iconUrl,
-                                        errorBuilder: (_, __, ___) => const Icon(
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(
                                           Icons.grid_view_rounded,
                                           color: AppColors.primary,
                                         ),
@@ -436,7 +440,8 @@ class _BusinessesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Section(
         title: isArabic ? 'أنشطة مميزة' : 'Featured businesses',
-        subtitle: isArabic ? 'اختيارات موثوقة بالقرب منك' : 'Trusted picks near you',
+        subtitle:
+            isArabic ? 'اختيارات موثوقة بالقرب منك' : 'Trusted picks near you',
         actionLabel: isArabic ? 'عرض الكل' : 'See all',
         onAction: () => Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const SearchPage()),
@@ -467,8 +472,11 @@ class _ProductsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _Section(
-        title: isArabic ? 'منتجات وخدمات مختارة' : 'Selected products & services',
-        subtitle: isArabic ? 'اقتراحات قد تناسبك' : 'Suggestions you may like',
+        title: isArabic
+            ? 'منتجات وخدمات مختارة'
+            : 'Selected products & services',
+        subtitle:
+            isArabic ? 'اقتراحات قد تناسبك' : 'Suggestions you may like',
         child: items.isEmpty
             ? _SectionEmpty(
                 isArabic: isArabic,
@@ -578,7 +586,9 @@ class _DealsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Section(
         title: isArabic ? 'عروض لا تفوّتها' : 'Deals not to miss',
-        subtitle: isArabic ? 'استفد قبل انتهاء المدة' : 'Claim them before they end',
+        subtitle: isArabic
+            ? 'استفد قبل انتهاء المدة'
+            : 'Claim them before they end',
         child: items.isEmpty
             ? _SectionEmpty(
                 isArabic: isArabic,
@@ -622,8 +632,10 @@ class _DealsSection extends StatelessWidget {
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: .7),
-                                        borderRadius: BorderRadius.circular(999),
+                                        color:
+                                            Colors.white.withValues(alpha: .7),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
                                       ),
                                       child: Text(
                                         isArabic
@@ -702,9 +714,10 @@ class _Section extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w900,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                  ),
                         ),
                         const SizedBox(height: 3),
                         Text(
