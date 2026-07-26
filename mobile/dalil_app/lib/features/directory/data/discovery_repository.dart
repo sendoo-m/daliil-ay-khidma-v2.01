@@ -24,7 +24,38 @@ final class DiscoveryRepository {
 
   final Dio _dio;
 
-  Future<DiscoveryData> fetch() async {
+  static const _cacheDuration = Duration(minutes: 5);
+  DiscoveryData? _cachedData;
+  DateTime? _cachedAt;
+  Future<DiscoveryData>? _inFlight;
+
+  Future<DiscoveryData> fetch({bool forceRefresh = false}) {
+    final cached = _cachedData;
+    final cachedAt = _cachedAt;
+    final cacheIsFresh = cached != null &&
+        cachedAt != null &&
+        DateTime.now().difference(cachedAt) < _cacheDuration;
+
+    if (!forceRefresh && cacheIsFresh) {
+      return Future.value(cached);
+    }
+
+    final pending = _inFlight;
+    if (!forceRefresh && pending != null) return pending;
+
+    final request = _fetchRemote();
+    _inFlight = request;
+    return request.whenComplete(() {
+      if (identical(_inFlight, request)) _inFlight = null;
+    });
+  }
+
+  void clearCache() {
+    _cachedData = null;
+    _cachedAt = null;
+  }
+
+  Future<DiscoveryData> _fetchRemote() async {
     final results = await Future.wait<dynamic>([
       _businesses(ordering: '-view_count'),
       _businesses(ordering: '-average_rating'),
@@ -33,13 +64,17 @@ final class DiscoveryRepository {
     ]);
 
     final searches = results[3] as Map<String, List<String>>;
-    return DiscoveryData(
+    final data = DiscoveryData(
       trendingBusinesses: results[0] as List<Business>,
       recommendedBusinesses: results[1] as List<Business>,
       popularProducts: results[2] as List<ProductSummary>,
       popularSearchesAr: searches['ar'] ?? _fallbackAr,
       popularSearchesEn: searches['en'] ?? _fallbackEn,
     );
+
+    _cachedData = data;
+    _cachedAt = DateTime.now();
+    return data;
   }
 
   Future<List<Business>> _businesses({required String ordering}) async {
