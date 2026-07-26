@@ -28,12 +28,16 @@ class MobileHomeView(APIView):
     @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         now = timezone.now()
+
+        # Return ALL active categories so Flutter's _CategoryStrip in
+        # search_page.dart can display and filter by every available category.
+        # The previous [:12] cap meant only 12 of 33 categories were visible.
         categories = Category.objects.filter(is_active=True).annotate(
             public_business_count=Count(
                 'business',
                 filter=Q(business__is_active=True, business__is_verified=True),
             )
-        ).order_by('order', 'name_ar')[:12]
+        ).order_by('order', 'name_ar')
 
         businesses = Business.objects.filter(
             is_active=True,
