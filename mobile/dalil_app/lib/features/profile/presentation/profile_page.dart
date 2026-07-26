@@ -17,30 +17,17 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
-  final _formKey = GlobalKey<FormState>();
-  final _firstName = TextEditingController();
-  final _lastName = TextEditingController();
-  final _email = TextEditingController();
-  final _phone = TextEditingController();
-  final _city = TextEditingController();
-  final _bio = TextEditingController();
   UserProfile? _profile;
   bool _loading = true;
-  bool _saving = false;
   String? _error;
+
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
+  String _t(String ar, String en) => _isArabic ? ar : en;
 
   @override
   void initState() {
     super.initState();
     _load();
-  }
-
-  @override
-  void dispose() {
-    for (final item in [_firstName, _lastName, _email, _phone, _city, _bio]) {
-      item.dispose();
-    }
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -50,8 +37,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
     try {
       final profile = await ref.read(profileRepositoryProvider).get();
-      if (!mounted) return;
-      _setProfile(profile);
+      if (mounted) setState(() => _profile = profile);
     } catch (error) {
       if (mounted) setState(() => _error = ApiFailure.message(error));
     } finally {
@@ -59,24 +45,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
   }
 
-  void _setProfile(UserProfile profile) {
-    _profile = profile;
-    _firstName.text = profile.firstName;
-    _lastName.text = profile.lastName;
-    _email.text = profile.email;
-    _phone.text = profile.phone;
-    _city.text = profile.city;
-    _bio.text = profile.bio;
-  }
-
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: !widget.embedded,
-          title: const Text('حسابي'),
+          title: Text(_t('حسابي', 'My profile')),
           actions: [
             IconButton(
-              tooltip: 'الإشعارات',
+              tooltip: _t('الإشعارات', 'Notifications'),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const NotificationsPage(),
@@ -84,230 +60,158 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               ),
               icon: const Icon(Icons.notifications_none_rounded),
             ),
-            IconButton(
-              tooltip: 'تسجيل الخروج',
-              onPressed: _confirmLogout,
-              icon: const Icon(Icons.logout_rounded),
-            ),
           ],
         ),
         body: _body(),
       );
 
   Widget _body() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_error != null || _profile == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.person_off_outlined, size: 64),
-              const SizedBox(height: 16),
-              Text(_error ?? 'تعذر تحميل الملف الشخصي'),
-              const SizedBox(height: 18),
-              OutlinedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('إعادة المحاولة'),
-              ),
-            ],
-          ),
-        ),
+      return _MessageState(
+        icon: Icons.person_off_outlined,
+        title: _t('تعذر تحميل الحساب', 'Could not load profile'),
+        message: _error ?? _t('حدث خطأ غير متوقع', 'An unexpected error occurred'),
+        actionLabel: _t('إعادة المحاولة', 'Try again'),
+        onAction: _load,
       );
     }
+
     final profile = _profile!;
     return RefreshIndicator(
       onRefresh: _load,
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
-          children: [
-            _ProfileHeader(profile: profile),
-            const SizedBox(height: 24),
-            Text(
-              'البيانات الشخصية',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 36),
+        children: [
+          _ProfileHero(profile: profile, isArabic: _isArabic),
+          const SizedBox(height: 16),
+          _QuickActions(
+            isArabic: _isArabic,
+            onEdit: () => _openEdit(profile),
+            onPassword: _changePassword,
+            onNotifications: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const NotificationsPage(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _SectionTitle(_t('بيانات الحساب', 'Account details')),
+          const SizedBox(height: 10),
+          _DetailsCard(profile: profile, isArabic: _isArabic),
+          const SizedBox(height: 20),
+          _SectionTitle(_t('الدعم والمعلومات', 'Support & information')),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            children: [
+              _SettingsTile(
+                icon: Icons.help_outline_rounded,
+                title: _t('مركز المساعدة', 'Help center'),
+                onTap: () => _showInfo(
+                  _t('مركز المساعدة', 'Help center'),
+                  _t(
+                    'يمكنك التواصل مع فريق الدعم من خلال قنوات التواصل الرسمية المتاحة في التطبيق.',
+                    'Contact support through the official support channels available in the app.',
                   ),
+                ),
+              ),
+              _SettingsTile(
+                icon: Icons.privacy_tip_outlined,
+                title: _t('الخصوصية', 'Privacy'),
+                onTap: () => _showInfo(
+                  _t('الخصوصية', 'Privacy'),
+                  _t(
+                    'تُستخدم بياناتك لتشغيل الحساب وتحسين تجربتك داخل دليل أي خدمة.',
+                    'Your data is used to operate your account and improve your experience in Daliil Ay Khidma.',
+                  ),
+                ),
+              ),
+              _SettingsTile(
+                icon: Icons.description_outlined,
+                title: _t('الشروط والأحكام', 'Terms & conditions'),
+                onTap: () => _showInfo(
+                  _t('الشروط والأحكام', 'Terms & conditions'),
+                  _t(
+                    'باستخدام التطبيق فإنك توافق على الشروط والسياسات المعتمدة للخدمة.',
+                    'By using the app, you agree to the approved terms and service policies.',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            onPressed: _confirmLogout,
+            icon: const Icon(Icons.logout_rounded),
+            label: Text(_t('تسجيل الخروج', 'Sign out')),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              side: BorderSide(color: Theme.of(context).colorScheme.error),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _field(_firstName, 'الاسم الأول')),
-                const SizedBox(width: 12),
-                Expanded(child: _field(_lastName, 'اسم العائلة')),
-              ],
-            ),
-            _field(
-              _email,
-              'البريد الإلكتروني',
-              keyboardType: TextInputType.emailAddress,
-              validator: _validateEmail,
-            ),
-            _field(
-              _phone,
-              'رقم الهاتف',
-              keyboardType: TextInputType.phone,
-              validator: _validatePhone,
-            ),
-            _field(_city, 'المدينة'),
-            _field(
-              _bio,
-              'نبذة عنك',
-              maxLines: 3,
-              maxLength: 500,
-            ),
-            const SizedBox(height: 18),
-            FilledButton.icon(
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ التعديلات'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _saving ? null : _changePassword,
-              icon: const Icon(Icons.lock_reset_rounded),
-              label: const Text('تغيير كلمة المرور'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-    int? maxLength,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          validator: validator,
-          maxLines: maxLines,
-          maxLength: maxLength,
-          textInputAction:
-              maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
-          decoration: InputDecoration(labelText: label),
-        ),
-      );
-
-  String? _validateEmail(String? value) {
-    final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'البريد الإلكتروني مطلوب';
-    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      return 'أدخل بريدًا إلكترونيًا صحيحًا';
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    final phone = value?.trim() ?? '';
-    if (phone.isEmpty) return 'رقم الهاتف مطلوب';
-    if (!RegExp(r'^01[0125][0-9]{8}$').hasMatch(phone)) {
-      return 'أدخل رقم هاتف مصري صحيحًا';
-    }
-    return null;
-  }
-
-  Future<void> _save() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _saving = true);
-    try {
-      final profile = await ref.read(profileRepositoryProvider).update(
-            firstName: _firstName.text,
-            lastName: _lastName.text,
-            email: _email.text,
-            phone: _phone.text,
-            bio: _bio.text,
-            city: _city.text,
-          );
-      if (!mounted) return;
-      setState(() => _setProfile(profile));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تحديث الملف الشخصي بنجاح')),
-      );
-    } catch (error) {
-      if (mounted) _showError(error);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+  Future<void> _openEdit(UserProfile profile) async {
+    final updated = await Navigator.of(context).push<UserProfile>(
+      MaterialPageRoute<UserProfile>(
+        builder: (_) => _EditProfilePage(profile: profile),
+      ),
+    );
+    if (updated != null && mounted) setState(() => _profile = updated);
   }
 
   Future<void> _changePassword() async {
     final oldPassword = TextEditingController();
     final newPassword = TextEditingController();
     final confirmation = TextEditingController();
-    var hideOld = true;
-    var hideNew = true;
-    String? dialogError;
     var submitting = false;
+    String? errorMessage;
+
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('تغيير كلمة المرور'),
+          title: Text(_t('تغيير كلمة المرور', 'Change password')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: oldPassword,
-                  obscureText: hideOld,
+                  obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'كلمة المرور الحالية',
-                    suffixIcon: IconButton(
-                      onPressed: () =>
-                          setDialogState(() => hideOld = !hideOld),
-                      icon: Icon(
-                        hideOld ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
+                    labelText: _t('كلمة المرور الحالية', 'Current password'),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextField(
                   controller: newPassword,
-                  obscureText: hideNew,
+                  obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'كلمة المرور الجديدة',
-                    suffixIcon: IconButton(
-                      onPressed: () =>
-                          setDialogState(() => hideNew = !hideNew),
-                      icon: Icon(
-                        hideNew ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
+                    labelText: _t('كلمة المرور الجديدة', 'New password'),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextField(
                   controller: confirmation,
-                  obscureText: hideNew,
-                  decoration:
-                      const InputDecoration(labelText: 'تأكيد كلمة المرور'),
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: _t('تأكيد كلمة المرور', 'Confirm password'),
+                  ),
                 ),
-                if (dialogError != null) ...[
+                if (errorMessage != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    dialogError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    errorMessage!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ],
               ],
@@ -315,30 +219,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           actions: [
             TextButton(
-              onPressed:
-                  submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء'),
+              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
+              child: Text(_t('إلغاء', 'Cancel')),
             ),
             FilledButton(
               onPressed: submitting
                   ? null
                   : () async {
                       if (newPassword.text.length < 8) {
-                        setDialogState(
-                          () => dialogError =
-                              'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف',
-                        );
+                        setDialogState(() => errorMessage = _t(
+                              'كلمة المرور يجب ألا تقل عن 8 أحرف',
+                              'Password must be at least 8 characters',
+                            ));
                         return;
                       }
                       if (newPassword.text != confirmation.text) {
-                        setDialogState(
-                          () => dialogError = 'كلمتا المرور غير متطابقتين',
-                        );
+                        setDialogState(() => errorMessage = _t(
+                              'كلمتا المرور غير متطابقتين',
+                              'Passwords do not match',
+                            ));
                         return;
                       }
                       setDialogState(() {
                         submitting = true;
-                        dialogError = null;
+                        errorMessage = null;
                       });
                       try {
                         await ref.read(profileRepositoryProvider).changePassword(
@@ -347,22 +251,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             );
                         if (!dialogContext.mounted) return;
                         Navigator.pop(dialogContext);
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(this.context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم تغيير كلمة المرور بنجاح'),
-                          ),
-                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(_t(
+                                'تم تغيير كلمة المرور بنجاح',
+                                'Password changed successfully',
+                              )),
+                            ),
+                          );
+                        }
                       } catch (error) {
                         if (dialogContext.mounted) {
                           setDialogState(() {
                             submitting = false;
-                            dialogError = ApiFailure.message(error);
+                            errorMessage = ApiFailure.message(error);
                           });
                         }
                       }
                     },
-              child: Text(submitting ? 'جارٍ التغيير...' : 'تغيير'),
+              child: Text(submitting ? _t('جارٍ التغيير...', 'Changing...') : _t('تغيير', 'Change')),
             ),
           ],
         ),
@@ -377,16 +285,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('تسجيل الخروج؟'),
-        content: const Text('يمكنك تسجيل الدخول إلى حسابك مرة أخرى في أي وقت.'),
+        title: Text(_t('تسجيل الخروج؟', 'Sign out?')),
+        content: Text(_t(
+          'يمكنك تسجيل الدخول إلى حسابك مرة أخرى في أي وقت.',
+          'You can sign in to your account again at any time.',
+        )),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(_t('إلغاء', 'Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('تسجيل الخروج'),
+            child: Text(_t('تسجيل الخروج', 'Sign out')),
           ),
         ],
       ),
@@ -396,49 +307,194 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
   }
 
-  void _showError(Object error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ApiFailure.message(error))),
-    );
+  Future<void> _showInfo(String title, String message) => showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(_t('تم', 'Done')),
+            ),
+          ],
+        ),
+      );
+}
+
+class _EditProfilePage extends ConsumerStatefulWidget {
+  const _EditProfilePage({required this.profile});
+  final UserProfile profile;
+
+  @override
+  ConsumerState<_EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends ConsumerState<_EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _firstName;
+  late final TextEditingController _lastName;
+  late final TextEditingController _email;
+  late final TextEditingController _phone;
+  late final TextEditingController _city;
+  late final TextEditingController _bio;
+  bool _saving = false;
+
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
+  String _t(String ar, String en) => _isArabic ? ar : en;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstName = TextEditingController(text: widget.profile.firstName);
+    _lastName = TextEditingController(text: widget.profile.lastName);
+    _email = TextEditingController(text: widget.profile.email);
+    _phone = TextEditingController(text: widget.profile.phone);
+    _city = TextEditingController(text: widget.profile.city);
+    _bio = TextEditingController(text: widget.profile.bio);
+  }
+
+  @override
+  void dispose() {
+    for (final controller in [_firstName, _lastName, _email, _phone, _city, _bio]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text(_t('تعديل الملف الشخصي', 'Edit profile'))),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _field(_firstName, _t('الاسم الأول', 'First name'))),
+                  const SizedBox(width: 12),
+                  Expanded(child: _field(_lastName, _t('اسم العائلة', 'Last name'))),
+                ],
+              ),
+              _field(
+                _email,
+                _t('البريد الإلكتروني', 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                    return _t('أدخل بريدًا صحيحًا', 'Enter a valid email');
+                  }
+                  return null;
+                },
+              ),
+              _field(
+                _phone,
+                _t('رقم الهاتف', 'Phone number'),
+                keyboardType: TextInputType.phone,
+              ),
+              _field(_city, _t('المدينة', 'City')),
+              _field(
+                _bio,
+                _t('نبذة عنك', 'About you'),
+                maxLines: 4,
+                maxLength: 500,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: Text(_saving ? _t('جارٍ الحفظ...', 'Saving...') : _t('حفظ التعديلات', 'Save changes')),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+    int? maxLength,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          decoration: InputDecoration(labelText: label),
+        ),
+      );
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _saving = true);
+    try {
+      final profile = await ref.read(profileRepositoryProvider).update(
+            firstName: _firstName.text,
+            lastName: _lastName.text,
+            email: _email.text,
+            phone: _phone.text,
+            bio: _bio.text,
+            city: _city.text,
+          );
+      if (mounted) Navigator.pop(context, profile);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiFailure.message(error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.profile});
-
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({required this.profile, required this.isArabic});
   final UserProfile profile;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final picture = Uri.tryParse(profile.profilePicture ?? '');
-    final pictureUrl =
-        picture != null && picture.hasScheme ? picture.toString() : null;
+    final name = '${profile.firstName} ${profile.lastName}'.trim();
     final initials = [
       if (profile.firstName.isNotEmpty) profile.firstName.characters.first,
       if (profile.lastName.isNotEmpty) profile.lastName.characters.first,
     ].join();
+    final uri = Uri.tryParse(profile.profilePicture ?? '');
+    final image = uri != null && uri.hasScheme ? NetworkImage(uri.toString()) : null;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.primary, colors.secondary],
-        ),
-        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(colors: [colors.primary, colors.secondary]),
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            radius: 34,
-            backgroundColor: Colors.white,
-            foregroundImage:
-                pictureUrl == null ? null : NetworkImage(pictureUrl),
-            child: pictureUrl == null
+            radius: 38,
+            backgroundColor: colors.surface,
+            foregroundImage: image,
+            child: image == null
                 ? Text(
                     initials.isEmpty ? profile.username.characters.first : initials,
                     style: TextStyle(
                       color: colors.primary,
-                      fontSize: 23,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                     ),
                   )
@@ -450,40 +506,186 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile.firstName.isEmpty && profile.lastName.isEmpty
-                      ? profile.username
-                      : '${profile.firstName} ${profile.lastName}'.trim(),
+                  name.isEmpty ? profile.username : name,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 21,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                Text(
-                  '@${profile.username}',
-                  style: const TextStyle(color: Color(0xFFE1F3EC)),
-                ),
+                Text('@${profile.username}', style: const TextStyle(color: Colors.white70)),
                 if (profile.dateJoined != null)
                   Text(
-                    'عضو منذ ${DateFormat('MMMM yyyy', 'ar').format(profile.dateJoined!.toLocal())}',
-                    style: const TextStyle(color: Color(0xFFE1F3EC)),
+                    '${isArabic ? 'عضو منذ' : 'Member since'} ${DateFormat('MMMM yyyy', isArabic ? 'ar' : 'en').format(profile.dateJoined!.toLocal())}',
+                    style: const TextStyle(color: Colors.white70),
                   ),
               ],
             ),
           ),
-          Tooltip(
-            message: profile.emailVerified
-                ? 'البريد الإلكتروني موثّق'
-                : 'البريد الإلكتروني غير موثّق',
-            child: Icon(
-              profile.emailVerified
-                  ? Icons.verified_rounded
-                  : Icons.info_outline_rounded,
-              color: Colors.white,
-            ),
+          Icon(
+            profile.emailVerified ? Icons.verified_rounded : Icons.info_outline_rounded,
+            color: Colors.white,
           ),
         ],
       ),
     );
   }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
+    required this.isArabic,
+    required this.onEdit,
+    required this.onPassword,
+    required this.onNotifications,
+  });
+  final bool isArabic;
+  final VoidCallback onEdit;
+  final VoidCallback onPassword;
+  final VoidCallback onNotifications;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(child: _QuickAction(icon: Icons.edit_outlined, label: isArabic ? 'تعديل' : 'Edit', onTap: onEdit)),
+          const SizedBox(width: 10),
+          Expanded(child: _QuickAction(icon: Icons.lock_reset_rounded, label: isArabic ? 'كلمة المرور' : 'Password', onTap: onPassword)),
+          const SizedBox(width: 10),
+          Expanded(child: _QuickAction(icon: Icons.notifications_none_rounded, label: isArabic ? 'الإشعارات' : 'Alerts', onTap: onNotifications)),
+        ],
+      );
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            child: Column(
+              children: [
+                Icon(icon, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 6),
+                Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+class _DetailsCard extends StatelessWidget {
+  const _DetailsCard({required this.profile, required this.isArabic});
+  final UserProfile profile;
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Column(
+          children: [
+            _DetailRow(icon: Icons.email_outlined, label: isArabic ? 'البريد الإلكتروني' : 'Email', value: profile.email),
+            _DetailRow(icon: Icons.phone_outlined, label: isArabic ? 'رقم الهاتف' : 'Phone', value: profile.phone),
+            _DetailRow(icon: Icons.location_city_outlined, label: isArabic ? 'المدينة' : 'City', value: profile.city),
+            if (profile.bio.isNotEmpty)
+              _DetailRow(icon: Icons.notes_rounded, label: isArabic ? 'نبذة' : 'Bio', value: profile.bio, last: true),
+          ],
+        ),
+      );
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.icon, required this.label, required this.value, this.last = false});
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          ListTile(
+            leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+            title: Text(label),
+            subtitle: Text(value.isEmpty ? '—' : value),
+          ),
+          if (!last) const Divider(height: 1),
+        ],
+      );
+}
+
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Card(child: Column(children: children));
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({required this.icon, required this.title, required this.onTap});
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        title: Text(title),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
+      );
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+      );
+}
+
+class _MessageState extends StatelessWidget {
+  const _MessageState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 64, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 16),
+              Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              OutlinedButton.icon(onPressed: onAction, icon: const Icon(Icons.refresh), label: Text(actionLabel)),
+            ],
+          ),
+        ),
+      );
 }
