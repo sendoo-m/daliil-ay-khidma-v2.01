@@ -595,7 +595,7 @@ class _CategoryStrip extends StatelessWidget {
               avatar: const Icon(Icons.apps_rounded, size: 18),
               onSelected: (_) => onSelected(null),
             ),
-            ...categories.take(12).map((item) {
+            ...categories.map((item) {
               final id = item['id'] as int?;
               final name = '${item[isArabic ? 'name_ar' : 'name_en'] ?? item['name_ar'] ?? item['name_en'] ?? ''}';
               return Padding(
