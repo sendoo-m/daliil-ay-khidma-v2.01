@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'catalog_models.dart';
+import 'deal_claim.dart';
 
 final class CatalogRepository {
   CatalogRepository(this._dio);
@@ -81,5 +82,21 @@ final class CatalogRepository {
   Future<DealClaimResult> claimDeal(String slug) async {
     final response = await _dio.post<Map<String, dynamic>>('deals/$slug/claim/');
     return DealClaimResult.fromJson(response.data!);
+  }
+
+  Future<List<DealClaim>> dealClaims({bool? isUsed}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      'deal-claims/',
+      queryParameters: {
+        if (isUsed != null) 'is_used': isUsed,
+        'ordering': '-claimed_at',
+        'page_size': 100,
+      },
+    );
+    final results = response.data?['results'] as List<dynamic>? ?? const [];
+    return results
+        .whereType<Map<String, dynamic>>()
+        .map(DealClaim.fromJson)
+        .toList(growable: false);
   }
 }

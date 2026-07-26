@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/presentation/login_page.dart';
+import '../features/catalog/presentation/my_deal_claims_page.dart';
 import '../features/directory/presentation/favorites_page.dart';
 import '../features/directory/presentation/search_page.dart';
 import '../features/home/presentation/home_page_v4.dart';
@@ -47,6 +48,17 @@ class _MainShellState extends ConsumerState<MainShell> {
               description: isArabic
                   ? 'سجّل دخولك لحفظ المحلات والخدمات والعودة إليها بسرعة في أي وقت.'
                   : 'Sign in to save businesses and services and return to them anytime.',
+              isArabic: isArabic,
+            ),
+      isAuthenticated
+          ? const MyDealClaimsPage()
+          : _GuestGate(
+              icon: Icons.confirmation_number_rounded,
+              eyebrow: isArabic ? 'حجوزاتك محفوظة' : 'Your claims in one place',
+              title: isArabic ? 'تابع العروض التي حجزتها' : 'Track your claimed deals',
+              description: isArabic
+                  ? 'سجّل دخولك لعرض أرقام المطالبات وحالة كل عرض حجزته.'
+                  : 'Sign in to see claim numbers and the status of every deal you booked.',
               isArabic: isArabic,
             ),
       isAuthenticated
@@ -110,6 +122,11 @@ class _MainShellState extends ConsumerState<MainShell> {
                 icon: const Icon(Icons.favorite_outline_rounded),
                 selectedIcon: const Icon(Icons.favorite_rounded),
                 label: isArabic ? 'المفضلة' : 'Favorites',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.confirmation_number_outlined),
+                selectedIcon: const Icon(Icons.confirmation_number_rounded),
+                label: isArabic ? 'عروضي' : 'Claims',
               ),
               NavigationDestination(
                 icon: const Icon(Icons.person_outline_rounded),
