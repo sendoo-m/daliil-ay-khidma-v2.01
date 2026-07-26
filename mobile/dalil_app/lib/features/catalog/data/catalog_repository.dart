@@ -11,6 +11,10 @@ final class CatalogRepository {
     return ProductDetail.fromJson(response.data!);
   }
 
+  Future<void> incrementProductView(String slug) async {
+    await _dio.post<void>('products/$slug/increment_view/');
+  }
+
   Future<List<ProductSummary>> searchProducts(
     String query, {
     int? categoryId,
