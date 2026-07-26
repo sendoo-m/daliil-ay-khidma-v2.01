@@ -13,6 +13,8 @@ import '../features/directory/data/business_repository.dart';
 import '../features/directory/data/discovery_repository.dart';
 import '../features/directory/data/search_history_repository.dart';
 import '../features/directory/presentation/search_history_controller.dart';
+import '../features/favorites/data/favorites_repository.dart';
+import '../features/favorites/presentation/favorites_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/location/data/location_service.dart';
 import '../features/notifications/data/device_repository.dart';
@@ -78,6 +80,13 @@ final discoveryRepositoryProvider = Provider(
 );
 final discoveryProvider = FutureProvider(
   (ref) => ref.watch(discoveryRepositoryProvider).fetch(),
+);
+final favoritesRepositoryProvider = Provider(
+  (ref) => FavoritesRepository(ref.watch(apiClientProvider).dio),
+);
+final favoritesProvider = StateNotifierProvider<FavoritesController,
+    AsyncValue<FavoritesState>>(
+  (ref) => FavoritesController(ref.watch(favoritesRepositoryProvider)),
 );
 final searchHistoryRepositoryProvider = Provider(
   (_) => SearchHistoryRepository(const FlutterSecureStorage()),
