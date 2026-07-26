@@ -81,8 +81,14 @@ final discoveryRepositoryProvider = Provider(
 final discoveryProvider = FutureProvider(
   (ref) => ref.watch(discoveryRepositoryProvider).fetch(),
 );
+final _favoritesStorageProvider = Provider(
+  (_) => const FlutterSecureStorage(),
+);
 final favoritesRepositoryProvider = Provider(
-  (ref) => FavoritesRepository(ref.watch(apiClientProvider).dio),
+  (ref) => FavoritesRepository(
+    ref.watch(apiClientProvider).dio,
+    ref.watch(_favoritesStorageProvider),
+  ),
 );
 final favoritesProvider = StateNotifierProvider<FavoritesController,
     AsyncValue<FavoritesState>>(
