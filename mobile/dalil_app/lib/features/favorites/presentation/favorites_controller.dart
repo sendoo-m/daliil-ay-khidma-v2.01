@@ -1,16 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../catalog/data/catalog_models.dart';
 import '../../directory/data/business.dart';
 import '../data/favorites_repository.dart';
 
 final class FavoritesState {
   const FavoritesState({
     this.businesses = const [],
+    this.products = const [],
+    this.deals = const [],
     this.pendingBusinessIds = const {},
   });
 
   final List<Business> businesses;
-  final Set<int> pendingBusinessIds;
+  final List<ProductSummary> products;      // ← > مكسورة
+  final List<DealSummary> deals;            // ← > مكسورة
+  final Set<int> pendingBusinessIds;        // ← > مكسورة
 
   bool containsBusiness(int businessId) =>
       businesses.any((item) => item.id == businessId);
@@ -18,12 +23,22 @@ final class FavoritesState {
   bool isBusinessPending(int businessId) =>
       pendingBusinessIds.contains(businessId);
 
+  bool containsProduct(int productId) =>
+      products.any((p) => p.id == productId);
+
+  bool containsDeal(int dealId) =>
+      deals.any((d) => d.id == dealId);
+
   FavoritesState copyWith({
-    List<Business>? businesses,
+    List<Business>? businesses,             // ← > و ? مكسورتان
+    List<ProductSummary>? products,
+    List<DealSummary>? deals,
     Set<int>? pendingBusinessIds,
   }) =>
       FavoritesState(
         businesses: businesses ?? this.businesses,
+        products: products ?? this.products,
+        deals: deals ?? this.deals,
         pendingBusinessIds: pendingBusinessIds ?? this.pendingBusinessIds,
       );
 }
@@ -41,10 +56,19 @@ final class FavoritesController
     final previous = state.valueOrNull;
     if (previous == null) state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () async => FavoritesState(
-        businesses: await _repository.businesses(),
-        pendingBusinessIds: previous?.pendingBusinessIds ?? const {},
-      ),
+      () async {
+        final results = await Future.wait([
+          _repository.businesses(),
+          _repository.products(),
+          _repository.deals(),
+        ]);
+        return FavoritesState(
+          businesses: results[0] as List<Business>,
+          products: results[1] as List<ProductSummary>,
+          deals: results[2] as List<DealSummary>,
+          pendingBusinessIds: previous?.pendingBusinessIds ?? const {},
+        );
+      },
     );
   }
 
@@ -54,8 +78,9 @@ final class FavoritesController
       return current.containsBusiness(business.id);
     }
 
-    final wasFavorite = current.containsBusiness(business.id) || business.isFavorite;
-    final optimisticBusinesses = wasFavorite
+    final wasFavorite =
+        current.containsBusiness(business.id) || business.isFavorite;
+    final optimistic = wasFavorite
         ? current.businesses
             .where((item) => item.id != business.id)
             .toList(growable: false)
@@ -63,10 +88,7 @@ final class FavoritesController
     final pending = {...current.pendingBusinessIds, business.id};
 
     state = AsyncValue.data(
-      current.copyWith(
-        businesses: optimisticBusinesses,
-        pendingBusinessIds: pending,
-      ),
+      current.copyWith(businesses: optimistic, pendingBusinessIds: pending),
     );
 
     try {
@@ -91,5 +113,29 @@ final class FavoritesController
       state = AsyncValue.data(current);
       Error.throwWithStackTrace(error, stackTrace);
     }
+  }
+
+  Future<bool> toggleProduct(ProductSummary product) async {
+    final current = state.valueOrNull ?? const FavoritesState();
+    final already = current.containsProduct(product.id);
+    final updated = already
+        ? current.products
+            .where((p) => p.id != product.id)
+            .toList(growable: false)
+        : <ProductSummary>[product, ...current.products];
+    state = AsyncValue.data(current.copyWith(products: updated));
+    await _repository.saveProducts(updated);
+    return !already;
+  }
+
+  Future<bool> toggleDeal(DealSummary deal) async {
+    final current = state.valueOrNull ?? const FavoritesState();
+    final already = current.containsDeal(deal.id);
+    final updated = already
+        ? current.deals.where((d) => d.id != deal.id).toList(growable: false)
+        : <DealSummary>[deal, ...current.deals];
+    state = AsyncValue.data(current.copyWith(deals: updated));
+    await _repository.saveDeals(updated);
+    return !already;
   }
 }
