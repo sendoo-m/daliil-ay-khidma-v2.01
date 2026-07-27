@@ -1,1 +1,100 @@
-aW1wb3J0ICdkYXJ0OmNvbnZlcnQnOwoKaW1wb3J0ICdwYWNrYWdlOmRpby9kaW8uZGFydCc7CmltcG9ydCAncGFja2FnZTpmbHV0dGVyX3NlY3VyZV9zdG9yYWdlL2ZsdXR0ZXJfc2VjdXJlX3N0b3JhZ2UuZGFydCc7CgppbXBvcnQgJy4uLy4uL2NhdGFsb2cvZGF0YS9jYXRhbG9nX21vZGVscy5kYXJ0JzsKaW1wb3J0ICcuLi8uLi9kaXJlY3RvcnkvZGF0YS9idXNpbmVzcy5kYXJ0JzsKCmZpbmFsIGNsYXNzIEZhdm9yaXRlc1JlcG9zaXRvcnkgewogIEZhdm9yaXRlc1JlcG9zaXRvcnkodGhpcy5fZGlvLCB0aGlzLl9zdG9yYWdlKTsKCiAgZmluYWwgRGlvIF9kaW87CiAgZmluYWwgRmx1dHRlclNlY3VyZVN0b3JhZ2UgX3N0b3JhZ2U7CgogIHN0YXRpYyBjb25zdCBfa2V5UHJvZHVjdHMgPSAnZmF2X3Byb2R1Y3RzJzsKICBzdGF0aWMgY29uc3QgX2tleURlYWxzID0gJ2Zhdl9kZWFscyc7CgogIC8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSBCdXNpbmVzc2VzIChBUEkpIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKICBGdXR1cmU8TGlzdDxCdXNpbmVzcz4+IGJ1c2luZXNzZXMoKSBhc3luYyB7CiAgICBmaW5hbCByZXNwb25zZSA9IGF3YWl0IF9kaW8uZ2V0PE1hcDxTdHJpbmcsIGR5bmFtaWM+PignZmF2b3JpdGVzLycpOwogICAgZmluYWwgcmVzdWx0cyA9CiAgICAgICAgcmVzcG9uc2UuZGF0YSFbJ3Jlc3VsdHMnXSBhcyBMaXN0PGR5bmFtaWM+PyA/PyBjb25zdCBbXTsKICAgIHJldHVybiByZXN1bHRzCiAgICAgICAgLndoZXJlVHlwZTxNYXA8U3RyaW5nLCBkeW5hbWljPj4oKQogICAgICAgIC5tYXAoKGl0ZW0pID0+IGl0ZW1bJ2J1c2luZXNzJ10pCiAgICAgICAgLndoZXJlVHlwZTxNYXA8U3RyaW5nLCBkeW5hbWljPj4oKQogICAgICAgIC5tYXAoQnVzaW5lc3MuZnJvbUpzb24pCiAgICAgICAgLnRvTGlzdChncm93YWJsZTogZmFsc2UpOwogIH0KCiAgRnV0dXJlPGJvb2w+IHRvZ2dsZUJ1c2luZXNzKGludCBidXNpbmVzc0lkKSBhc3luYyB7CiAgICBmaW5hbCByZXNwb25zZSA9IGF3YWl0IF9kaW8ucG9zdDxNYXA8U3RyaW5nLCBkeW5hbWljPj4oCiAgICAgICdmYXZvcml0ZXMvdG9nZ2xlLycsCiAgICAgIGRhdGE6IHsnYnVzaW5lc3NfaWQnOiBidXNpbmVzc0lkfSwKICAgICk7CiAgICByZXR1cm4gcmVzcG9uc2UuZGF0YSFbJ2lzX2Zhdm9yaXRlJ10gYXMgYm9vbD8gPz8gZmFsc2U7CiAgfQoKICAvLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gUHJvZHVjdHMgKExvY2FsKSAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCiAgRnV0dXJlPExpc3Q8UHJvZHVjdFN1bW1hcnk+PiBwcm9kdWN0cygpIGFzeW5jIHsKICAgIGZpbmFsIHJhdyA9IGF3YWl0IF9zdG9yYWdlLnJlYWQoa2V5OiBfa2V5UHJvZHVjdHMpOwogICAgaWYgKHJhdyA9PSBudWxsIHx8IHJhdy5pc0VtcHR5KSByZXR1cm4gY29uc3QgW107CiAgICBmaW5hbCBsaXN0ID0ganNvbkRlY29kZShyYXcpIGFzIExpc3Q8ZHluYW1pYz4/ID8/IGNvbnN0IFtdOwogICAgcmV0dXJuIGxpc3QKICAgICAgICAud2hlcmVUeXBlPE1hcDxTdHJpbmcsIGR5bmFtaWM+PigpCiAgICAgICAgLm1hcChQcm9kdWN0U3VtbWFyeS5mcm9tSnNvbikKICAgICAgICAudG9MaXN0KGdyb3dhYmxlOiBmYWxzZSk7CiAgfQoKICBGdXR1cmU8dm9pZD4gc2F2ZVByb2R1Y3RzKExpc3Q8UHJvZHVjdFN1bW1hcnk+IGl0ZW1zKSBhc3luYyB7CiAgICBmaW5hbCBlbmNvZGVkID0ganNvbkVuY29kZSgKICAgICAgaXRlbXMubWFwKChwKSA9PiB7CiAgICAgICAgJ2lkJzogcC5pZCwKICAgICAgICAnbmFtZV9hcic6IHAubmFtZSwKICAgICAgICAnc2x1Zyc6IHAuc2x1ZywKICAgICAgICAncHJpY2UnOiBwLnByaWNlLAogICAgICAgICdvbGRfcHJpY2UnOiBwLm9sZFByaWNlLAogICAgICAgICdwcm9kdWN0X3R5cGUnOiBwLnByb2R1Y3RUeXBlLAogICAgICAgICdwcmltYXJ5X2ltYWdlJzogcC5pbWFnZSA9PSBudWxsID8gbnVsbCA6IHsnaW1hZ2UnOiBwLmltYWdlfSwKICAgICAgICAnYnVzaW5lc3MnOiB7J25hbWVfYXInOiBwLmJ1c2luZXNzTmFtZSwgJ3NsdWcnOiBwLmJ1c2luZXNzU2x1Z30sCiAgICAgIH0pLnRvTGlzdCgpLAogICAgKTsKICAgIGF3YWl0IF9zdG9yYWdlLndyaXRlKGtleTogX2tleVByb2R1Y3RzLCB2YWx1ZTogZW5jb2RlZCk7CiAgfQoKICAvLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gRGVhbHMgKExvY2FsKSAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCiAgRnV0dXJlPExpc3Q8RGVhbFN1bW1hcnk+PiBkZWFscygpIGFzeW5jIHsKICAgIGZpbmFsIHJhdyA9IGF3YWl0IF9zdG9yYWdlLnJlYWQoa2V5OiBfa2V5RGVhbHMpOwogICAgaWYgKHJhdyA9PSBudWxsIHx8IHJhdy5pc0VtcHR5KSByZXR1cm4gY29uc3QgW107CiAgICBmaW5hbCBsaXN0ID0ganNvbkRlY29kZShyYXcpIGFzIExpc3Q8ZHluYW1pYz4/ID8/IGNvbnN0IFtdOwogICAgcmV0dXJuIGxpc3QKICAgICAgICAud2hlcmVUeXBlPE1hcDxTdHJpbmcsIGR5bmFtaWM+PigpCiAgICAgICAgLm1hcChEZWFsU3VtbWFyeS5mcm9tSnNvbikKICAgICAgICAudG9MaXN0KGdyb3dhYmxlOiBmYWxzZSk7CiAgfQoKICBGdXR1cmU8dm9pZD4gc2F2ZURlYWxzKExpc3Q8RGVhbFN1bW1hcnk+IGl0ZW1zKSBhc3luYyB7CiAgICBmaW5hbCBlbmNvZGVkID0ganNvbkVuY29kZSgKICAgICAgaXRlbXMubWFwKChkKSA9PiB7CiAgICAgICAgJ2lkJzogZC5pZCwKICAgICAgICAndGl0bGVfYXInOiBkLnRpdGxlLAogICAgICAgICdzbHVnJzogZC5zbHVnLAogICAgICAgICdkZWFsX3R5cGUnOiBkLmRlYWxUeXBlLAogICAgICAgICdkaXNjb3VudF9wZXJjZW50YWdlJzogZC5kaXNjb3VudFBlcmNlbnRhZ2UsCiAgICAgICAgJ2RheXNfcmVtYWluaW5nJzogZC5kYXlzUmVtYWluaW5nLAogICAgICAgICdpc192YWxpZCc6IGQuaXNWYWxpZCwKICAgICAgICAnaXNfZmVhdHVyZWQnOiBkLmlzRmVhdHVyZWQsCiAgICAgICAgJ29yaWdpbmFsX3ByaWNlJzogZC5vcmlnaW5hbFByaWNlLAogICAgICAgICdmaW5hbF9wcmljZSc6IGQuZmluYWxQcmljZSwKICAgICAgICAnaW1hZ2UnOiBkLmltYWdlLAogICAgICAgICdyZW1haW5pbmdfdXNlcyc6IGQucmVtYWluaW5nVXNlcywKICAgICAgICAnYnVzaW5lc3MnOiB7J25hbWVfYXInOiBkLmJ1c2luZXNzTmFtZSwgJ3NsdWcnOiBkLmJ1c2luZXNzU2x1Z30sCiAgICAgIH0pLnRvTGlzdCgpLAogICAgKTsKICAgIGF3YWl0IF9zdG9yYWdlLndyaXRlKGtleTogX2tleURlYWxzLCB2YWx1ZTogZW5jb2RlZCk7CiAgfQp9Cg==
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../catalog/data/catalog_models.dart';
+import '../../directory/data/business.dart';
+
+final class FavoritesRepository {
+  FavoritesRepository(this._dio, this._storage);
+
+  final Dio _dio;
+  final FlutterSecureStorage _storage;
+
+  static const _keyProducts = 'fav_products';
+  static const _keyDeals = 'fav_deals';
+
+  // ------------------------------ Businesses (API) ------------------------------
+
+  Future<List<Business>> businesses() async {
+    final response = await _dio.get<Map<String, dynamic>>('favorites/');
+    final results =
+        response.data!['results'] as List<dynamic>? ?? const [];
+    return results
+        .whereType<Map<String, dynamic>>()
+        .map((item) => item['business'])
+        .whereType<Map<String, dynamic>>()
+        .map(Business.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<bool> toggleBusiness(int businessId) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      'favorites/toggle/',
+      data: {'business_id': businessId},
+    );
+    return response.data!['is_favorite'] as bool? ?? false;
+  }
+
+  // ------------------------------ Products (Local) ------------------------------
+
+  Future<List<ProductSummary>> products() async {
+    final raw = await _storage.read(key: _keyProducts);
+    if (raw == null || raw.isEmpty) return const [];
+    final list = jsonDecode(raw) as List<dynamic>? ?? const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(ProductSummary.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<void> saveProducts(List<ProductSummary> items) async {
+    final encoded = jsonEncode(
+      items.map((p) => {
+        'id': p.id,
+        'name_ar': p.name,
+        'slug': p.slug,
+        'price': p.price,
+        'old_price': p.oldPrice,
+        'product_type': p.productType,
+        'primary_image': p.image == null ? null : {'image': p.image},
+        'business': {'name_ar': p.businessName, 'slug': p.businessSlug},
+      }).toList(),
+    );
+    await _storage.write(key: _keyProducts, value: encoded);
+  }
+
+  // ------------------------------ Deals (Local) ------------------------------
+
+  Future<List<DealSummary>> deals() async {
+    final raw = await _storage.read(key: _keyDeals);
+    if (raw == null || raw.isEmpty) return const [];
+    final list = jsonDecode(raw) as List<dynamic>? ?? const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(DealSummary.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<void> saveDeals(List<DealSummary> items) async {
+    final encoded = jsonEncode(
+      items.map((d) => {
+        'id': d.id,
+        'title_ar': d.title,
+        'slug': d.slug,
+        'deal_type': d.dealType,
+        'discount_percentage': d.discountPercentage,
+        'days_remaining': d.daysRemaining,
+        'is_valid': d.isValid,
+        'is_featured': d.isFeatured,
+        'original_price': d.originalPrice,
+        'final_price': d.finalPrice,
+        'image': d.image,
+        'remaining_uses': d.remainingUses,
+        'business': {'name_ar': d.businessName, 'slug': d.businessSlug},
+      }).toList(),
+    );
+    await _storage.write(key: _keyDeals, value: encoded);
+  }
+}
